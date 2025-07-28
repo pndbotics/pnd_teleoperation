@@ -1,0 +1,7 @@
+build
+install
+log
+rosbag2_*
+home
+**/__pycache__
+.vscode
