@@ -1,4 +1,4 @@
-# pnd-retarget
+# pnd_teleoperation
 
 ## env
 
@@ -31,6 +31,15 @@ cmake -DWITH_PYTHON=ON -DWITH_IPOPT=ON -DWITH_OPENMP=ON -DWITH_THREAD=ON .. && \
 make -j$(nproc) && \
 sudo make install && \
 sudo ldconfig
+```
+
+# Clone repo
+
+```sh
+git clone https://gitlab.com/pnd/github/pnd_teleoperation.git
+cd pnd_teleoperation
+git lfs install
+git lfs pull
 ```
 
 ## build
