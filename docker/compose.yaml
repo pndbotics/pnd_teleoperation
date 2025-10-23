@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  pnd_retarget_ros:
+    container_name: pnd_retarget_ros # <--- Add this line
+    build:
+      context: .  # Build Docker image from Dockerfile in the current directory
+      args:
+        USER_UID: ${UID}
+        USER_GID: ${GID}
+        # You can also pass USER_NAME if you want it to be configurable
+        # USER_NAME: myuser 
+    user: "${UID}:${GID}"  # Run commands inside the container as the current host user
+    environment:
+      - DISPLAY=${DISPLAY}  # Forward X11 display
+      # Add any other environment variables your application might need
+      # - QT_X11_NO_MITSHM=1 # Optional: Can help with some X11/Qt issues
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw  # Mount X11 socket
+      - ../:/pnd_workspace  # Mount the parent directory of the current folder to /workspace in the container
+    working_dir: /pnd_workspace  # Set the working directory inside the container
+    # To keep the container running, you might need a command.
+    # If your Dockerfile has an ENTRYPOINT or CMD, this might not be necessary
+    # or you might want to override it.
+    # Example:
+    command: sleep infinity
+    
+    # Use GPU for better rendering
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    # runtime: nvidia # For older docker-compose versions or if deploy key is not preferred
+
+# To run this:
+# 1. Ensure a Dockerfile exists in the current directory.
+# 2. Set UID and GID environment variables:
+#    export UID=$(id -u)
+#    export GID=$(id -g)
+#    (Or create a .env file in this directory with UID=${UID} and GID=${GID})
+# 3. Allow X11 connections from local Docker containers (run on host):
+#    xhost +local:docker
+# 4. Build and run:
+#    docker-compose up --build
+# 5. To open a shell in the running container:
+#    docker-compose exec app bash

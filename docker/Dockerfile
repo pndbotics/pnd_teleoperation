@@ -1,4 +1,15 @@
 FROM osrf/ros:humble-desktop
+ARG USER_UID=1000
+ARG USER_GID=1000
+ARG USER_NAME=dockeruser
+# Create a group and user
+# Only create if they don't already exist (e.g. in base image)
+RUN if ! getent group ${USER_GID} > /dev/null 2>&1; then \
+    groupadd --gid ${USER_GID} ${USER_NAME} || groupmod -g ${USER_GID} $(getent group ${USER_GID} | cut -d: -f1); \
+    fi && \
+    if ! getent passwd ${USER_UID} > /dev/null 2>&1; then \
+    useradd --uid ${USER_UID} --gid ${USER_GID} --create-home --shell /bin/bash ${USER_NAME} || usermod -u ${USER_UID} $(getent passwd ${USER_UID} | cut -d: -f1); \
+    fi
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -19,21 +30,5 @@ RUN apt-get update && apt-get install -y \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone and build CasADi
-RUN cd /tmp && \
-    git clone https://github.com/casadi/casadi.git casadi && \
-    cd casadi && \
-    git checkout 3.6.7 && \
-    mkdir build && \
-    cd build && \
-    cmake -DWITH_PYTHON=ON -DWITH_IPOPT=ON -DWITH_OPENMP=ON -DWITH_THREAD=ON .. && \
-    make -j$(nproc) && \
-    make install && \
-    ldconfig
-
-# Clean up
-# RUN rm -rf /tmp/casadi
-
-# Set the working directory
-WORKDIR /pnd_workspace
-
+# default activate ros environment
+RUN echo "source /opt/ros/humble/setup.bash" >> /home/${USER_NAME}/.bashrc

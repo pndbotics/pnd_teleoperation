@@ -4,14 +4,13 @@
 
 - ubuntu 22
 - ros2 humble
-- casadi (3.6.7, install from source, binary is not compatible with ros2 humble)
+- casadi
 
 ## dependencies
 
 ```sh
 sudo apt-get update && sudo apt-get install -y \
     build-essential \
-    coinor-libipopt-dev \
     gfortran \
     liblapack-dev \
     pkg-config \
@@ -37,15 +36,14 @@ sudo ldconfig
 ## build
 
 ```sh
-source /opt/ros/humble/setup.bash
-colcon build
+./build.sh
 ```
 
 ## run
 
 ```sh
 sudo su
-./run.sh [adam_sp|adam_u] # default adam_sp
+./run.sh [adam_type] [mocap_driver] # adam_type: adam_sp/adam_u/adam_sp_pro; mocap_driver: noitom;
 ```
 
 ## preview
@@ -55,6 +53,18 @@ sudo su
 ./preview.sh
 ```
 
+## use docker
+```bash
+cd docker
+# update user id
+./update_env.sh
+docker compose up --build
+```
+
+open another terminal and connect to the container
+```bash
+docker exec -it pnd_retarget_ros bash
+```
 
 ## for tests
 
