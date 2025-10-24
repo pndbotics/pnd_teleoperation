@@ -1,4 +1,12 @@
-# pnd_teleoperation
+# pnd-retarget
+
+## Supported Robot Models
+
+| Robot Model | Noitom | VR  | Description |
+| ----------- | ------ | --- | ----------- |
+| Adam SP     | ✅      |     |             |
+| Adam Pro    | ✅      |     |             |
+| Adam U      | ✅      |     |             |
 
 ## env
 
@@ -36,10 +44,9 @@ sudo ldconfig
 # Clone repo
 
 ```sh
-git clone https://gitlab.com/pnd/github/pnd_teleoperation.git
-cd pnd_teleoperation
-git lfs install
-git lfs pull
+git lfs clone https://gitlab.com/pnd/github/pnd-retarget.git
+cd pnd-retarget
+git submodule update --init --recursive
 ```
 
 ## build
@@ -52,7 +59,7 @@ git lfs pull
 
 ```sh
 sudo su
-./run.sh [adam_type] [mocap_driver] # adam_type: adam_sp/adam_u/adam_sp_pro; mocap_driver: noitom;
+./run.sh [adam_type] [mocap_driver] # adam_type: adam_sp/adam_u/adam_pro; mocap_driver: noitom;
 ```
 
 ## preview

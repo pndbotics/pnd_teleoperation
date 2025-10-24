@@ -18,7 +18,7 @@ ADAM_TYPE="${1:-adam_sp}"
 MOCAP_DRIVER="${2:-noitom}"
 
 # Valid options
-VALID_ADAM_TYPES=("adam_sp" "adam_u" "adam_sp_pro")
+VALID_ADAM_TYPES=("adam_sp" "adam_u" "adam_pro")
 VALID_MOCAP_DRIVERS=("noitom" "zerolab")
 
 # Function to print colored output
@@ -54,7 +54,7 @@ show_usage() {
     echo "Examples:"
     echo "  $0                          # Use defaults (adam_sp + noitom)"
     echo "  $0 adam_u                   # Use adam_u with default mocap (noitom)"
-    echo "  $0 adam_sp_pro zerolab      # Use adam_sp_pro with zerolab mocap"
+    echo "  $0 adam_pro zerolab      # Use adam_pro with zerolab mocap"
     echo ""
 }
 
@@ -99,19 +99,19 @@ get_launch_command() {
         "adam_u_noitom")
             echo "ros2 launch bringup retarget_adam_u.launch.py"
             ;;
-        "adam_sp_pro_noitom")
-            echo "ros2 launch bringup retarget_adam_sp_pro.launch.py"
+        "adam_pro_noitom")
+            echo "ros2 launch bringup retarget_adam_pro.launch.py"
             ;;
-        "adam_sp_pro_zerolab")
-            echo "ros2 launch bringup retarget_adam_sp_pro_zerolab.launch.py"
+        "adam_pro_zerolab")
+            echo "ros2 launch bringup retarget_adam_pro_zerolab.launch.py"
             ;;
         *)
             print_error "Unsupported combination: ${ADAM_TYPE} + ${MOCAP_DRIVER}"
             print_warning "Currently supported combinations:"
             print_warning "  adam_sp + noitom"
             print_warning "  adam_u + noitom"
-            print_warning "  adam_sp_pro + noitom"
-            print_warning "  adam_sp_pro + zerolab"
+            print_warning "  adam_pro + noitom"
+            print_warning "  adam_pro + zerolab"
             exit 1
             ;;
     esac
