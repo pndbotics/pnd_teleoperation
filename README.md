@@ -1,4 +1,4 @@
-# pnd-retarget
+# pnd-teleoperation
 
 ## Supported Robot Models
 
@@ -27,6 +27,7 @@ sudo apt-get update && sudo apt-get install -y \
     cmake \
     python3 \
     python3-pip \
+    git-lfs \
     --install-recommends
 
 cd /tmp && \
@@ -44,9 +45,8 @@ sudo ldconfig
 # Clone repo
 
 ```sh
-git lfs clone https://gitlab.com/pnd/github/pnd-retarget.git
-cd pnd-retarget
-git submodule update --init --recursive
+git clone https://github.com/pndbotics/pnd_teleoperation.git
+cd pnd_teleoperation
 ```
 
 ## build
