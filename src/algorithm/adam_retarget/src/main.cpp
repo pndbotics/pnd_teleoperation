@@ -221,14 +221,15 @@ class AdamRetarget : public rclcpp::Node {
                                    transform_msg.transform.rotation.y, transform_msg.transform.rotation.z,
                                    transform_msg.transform.rotation.w);
       } catch (const std::exception &e) {
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 3000, "Failed to get transform from %s to %s",
-                             this->base_frame.c_str(), frame.c_str());
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 3000, 
+                             "Failed to get transform from %s to %s: %s",
+                             this->base_frame.c_str(), frame.c_str(), e.what());
       }
     }
     if (bonemap.size() != needed_bone_names.size()) {
-      RCLCPP_INFO_STREAM_THROTTLE(
+      RCLCPP_WARN_STREAM_THROTTLE(
           this->get_logger(), *this->get_clock(), 3000,
-          "Missing bones: " << missing_bone_names.size() << " / " << needed_bone_names.size() << missing_bone_names);
+          "Missing bones: " << missing_bone_names.size() << " / " << needed_bone_names.size() << " - " << missing_bone_names);
       pub_jointstates();
       return;
     }

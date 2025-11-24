@@ -1,6 +1,7 @@
 # !/usr/bin/env python3
 import os
-from ament_index_python.packages import get_package_share_directory, get_package_prefix
+
+from ament_index_python.packages import get_package_prefix, get_package_share_directory
 
 casadi_vendor_path = get_package_prefix("casadi_vendor")
 

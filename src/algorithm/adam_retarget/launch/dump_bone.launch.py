@@ -1,18 +1,18 @@
-from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration, PythonExpression
+import os
+
 from launch import LaunchDescription
 from launch.actions import (
-    ExecuteProcess,
     DeclareLaunchArgument,
+    ExecuteProcess,
     RegisterEventHandler,
     Shutdown,
 )
 from launch.event_handlers import OnProcessExit
-import os
+from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
-
     bag_path_arg = DeclareLaunchArgument(
         name="bag",
         description="Full path of ros bag.",

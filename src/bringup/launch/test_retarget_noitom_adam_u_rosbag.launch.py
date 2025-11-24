@@ -1,4 +1,5 @@
 import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
@@ -22,8 +23,7 @@ def generate_launch_description():
         executable="adam_state_publisher",
         name="robot_state_publisher",
         output="screen",
-        parameters=[{"robot_description": robot_desc,
-                     "root_link":"lifting_Columns"}],
+        parameters=[{"robot_description": robot_desc, "root_link": "lifting_Columns"}],
     )
 
     # rviz

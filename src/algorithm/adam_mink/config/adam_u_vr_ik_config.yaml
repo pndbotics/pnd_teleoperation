@@ -1,0 +1,54 @@
+
+ik_cfg:
+  - adam_link_name: "lifting_Columns"
+    bone_name: "root"
+    position_cost: 20.0
+    orientation_cost: 20.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "torso"
+    bone_name: "Spine2"
+    position_cost: 0.0
+    orientation_cost: 10.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "shoulderYawLeft"
+    bone_name: "LeftArm"
+    position_cost: 0.0
+    orientation_cost: 0.1
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "shoulderYawRight"
+    bone_name: "RightArm"
+    position_cost: 0.0
+    orientation_cost: 0.1
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "neckPitch"
+    bone_name: "Head"
+    position_cost: 15.0
+    orientation_cost: 20.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "wristRollLeft"
+    bone_name: "LeftHand"
+    position_cost: 12.0
+    orientation_cost: 15.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.866, 0.0, -0.5, 0.0]
+  - adam_link_name: "wristRollRight"
+    bone_name: "RightHand"
+    position_cost: 12.0
+    orientation_cost: 15.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.866, 0.0, -0.5, 0.0]
+
+collision_cfg:
+  - collision1: ["wristYawLeft", "wristYawRight", "shoulderYawLeft", "shoulderYawRight"]
+    collision2: ["torso"]
+    min_distance: 0.02
+    detection_distance: 0.03
+  - collision1: ["wristYawLeft"]
+    collision2: ["wristYawRight"]
+    min_distance: 0.02
+    detection_distance: 0.03

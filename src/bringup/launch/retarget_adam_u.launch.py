@@ -1,15 +1,16 @@
 import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from launch.conditions import LaunchConfigurationEquals
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
     ld = LaunchDescription()
-    
+
     visual_declare = DeclareLaunchArgument(
         "visual",
         default_value="foxglove",
@@ -17,7 +18,7 @@ def generate_launch_description():
         choices=["rviz2", "foxglove"],
     )
     ld.add_entity(visual_declare)
-    
+
     # urdf
     package_name = "adam_description"
     urdf_name = "urdf/adam_u/adam_u.urdf"
@@ -71,9 +72,9 @@ def generate_launch_description():
                 "base_frame": "world_zup",
                 "control_loop_rate": 100.0,
                 "config_json_path": noitom_adam_u_json_path,
-                "warm_start_trig_timeout": 0.2,         # if mocap data is not received in this time, retarget will trigger warm start
-                "warm_start_duration": 5.0,             # in next 5 seconds after receiving new mocap data, retarget will use warm start velocity
-                "warm_start_slowdown_ratio": 0.1,      # when retarget is using warm start velocity, the velocity will be multiplied by this ratio, usually much smaller than 1.0
+                "warm_start_trig_timeout": 0.2,  # if mocap data is not received in this time, retarget will trigger warm start
+                "warm_start_duration": 5.0,  # in next 5 seconds after receiving new mocap data, retarget will use warm start velocity
+                "warm_start_slowdown_ratio": 0.1,  # when retarget is using warm start velocity, the velocity will be multiplied by this ratio, usually much smaller than 1.0
                 "custom_weight": {
                     # "head_dir_weight": 5.0,
                     # "root_pos_weight": 100.0,
@@ -119,7 +120,7 @@ def generate_launch_description():
     ld.add_action(adam_retarget_node)
     ld.add_action(static_transform_publisher_node)
     ld.add_action(noitom_mocap)
-    
+
     bringup_pkg_share = FindPackageShare(package="bringup").find("bringup")
     rviz_config_file = "rviz/robot.rviz"
     rviz_config_file_path = os.path.join(bringup_pkg_share, rviz_config_file)

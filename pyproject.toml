@@ -1,0 +1,31 @@
+[project]
+name = "pnd-retarget"
+version = "0.1.0"
+description = "pnd teleoperation ros2 python virtual environment"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "catkin-pkg>=1.1.0",
+    "loop-rate-limiters>=1.2.0",
+    "mink>=0.0.13",
+    "pydantic>=2.12.4",
+    "pyyaml>=6.0.3",
+    "websockets>=15.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "ament-lint>=0.14.2",
+    "black>=25.11.0",
+    "flake8>=7.3.0",
+    "isort>=7.0.0",
+    "lark>=1.3.1",
+    "pydocstyle>=6.3.0",
+    "pytest>=9.0.1",
+]
+
+[tool.isort]
+profile = "black"
+skip = [".venv", "build", "install", "log", "src/driver/pteleop_bridge/thirdparty/"]
+[tool.black]
+extend-exclude = ".venv|build|install|log|src/driver/pteleop_bridge/thirdparty/"

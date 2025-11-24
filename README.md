@@ -2,11 +2,11 @@
 
 ## Supported Robot Models
 
-| Robot Model | Noitom | VR  | Description |
-| ----------- | ------ | --- | ----------- |
-| Adam SP     | ✅      |     |             |
-| Adam Pro    | ✅      |     |             |
-| Adam U      | ✅      |     |             |
+| Robot Model | Noitom | VR   | Description |
+| ----------- | ------ | ---- | ----------- |
+| Adam SP     | ✅      | TODO |             |
+| Adam Pro    | ✅      | TODO |             |
+| Adam U      | ✅      | ✅    |             |
 
 ## env
 
@@ -67,6 +67,16 @@ sudo su
 ```sh
 sudo su
 ./preview.sh
+```
+
+## Options
+
+### webvr
+
+```sh
+pip install uv --user
+uv sync
+source .venv/bin/activate
 ```
 
 ## use docker

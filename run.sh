@@ -19,7 +19,7 @@ MOCAP_DRIVER="${2:-noitom}"
 
 # Valid options
 VALID_ADAM_TYPES=("adam_sp" "adam_u" "adam_pro")
-VALID_MOCAP_DRIVERS=("noitom" "zerolab")
+VALID_MOCAP_DRIVERS=("noitom" "zerolab" "vr")
 
 # Function to print colored output
 print_info() {
@@ -104,6 +104,9 @@ get_launch_command() {
             ;;
         "adam_pro_zerolab")
             echo "ros2 launch bringup retarget_adam_pro_zerolab.launch.py"
+            ;;
+        "adam_u_vr")
+            echo "ros2 launch bringup test_mink_vr.launch.py"
             ;;
         *)
             print_error "Unsupported combination: ${ADAM_TYPE} + ${MOCAP_DRIVER}"

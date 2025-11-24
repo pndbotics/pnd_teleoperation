@@ -38,15 +38,19 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    pkg_share = FindPackageShare('adam_state_publisher').find('adam_state_publisher')
-    urdf_dir = os.path.join(pkg_share, 'urdf')
-    xacro_file = os.path.join(urdf_dir, 'test-desc.urdf.xacro')
-    p = subprocess.Popen(['xacro', xacro_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    pkg_share = FindPackageShare("adam_state_publisher").find("adam_state_publisher")
+    urdf_dir = os.path.join(pkg_share, "urdf")
+    xacro_file = os.path.join(urdf_dir, "test-desc.urdf.xacro")
+    p = subprocess.Popen(
+        ["xacro", xacro_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
     robot_desc, stderr = p.communicate()
-    params = {'robot_description': robot_desc.decode('utf-8')}
-    rsp = launch_ros.actions.Node(package='adam_state_publisher',
-                                  executable='adam_state_publisher',
-                                  output='both',
-                                  parameters=[params])
+    params = {"robot_description": robot_desc.decode("utf-8")}
+    rsp = launch_ros.actions.Node(
+        package="adam_state_publisher",
+        executable="adam_state_publisher",
+        output="both",
+        parameters=[params],
+    )
 
     return launch.LaunchDescription([rsp])

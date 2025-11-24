@@ -38,14 +38,16 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    pkg_share = FindPackageShare('adam_state_publisher').find('adam_state_publisher')
-    urdf_dir = os.path.join(pkg_share, 'urdf')
-    xacro_file = os.path.join(urdf_dir, 'test-desc.urdf.xacro')
-    robot_desc = launch.substitutions.Command('xacro %s' % xacro_file)
-    params = {'robot_description': robot_desc}
-    rsp = launch_ros.actions.Node(package='adam_state_publisher',
-                                  executable='adam_state_publisher',
-                                  output='both',
-                                  parameters=[params])
+    pkg_share = FindPackageShare("adam_state_publisher").find("adam_state_publisher")
+    urdf_dir = os.path.join(pkg_share, "urdf")
+    xacro_file = os.path.join(urdf_dir, "test-desc.urdf.xacro")
+    robot_desc = launch.substitutions.Command("xacro %s" % xacro_file)
+    params = {"robot_description": robot_desc}
+    rsp = launch_ros.actions.Node(
+        package="adam_state_publisher",
+        executable="adam_state_publisher",
+        output="both",
+        parameters=[params],
+    )
 
     return launch.LaunchDescription([rsp])
