@@ -177,6 +177,7 @@ class AdamMinkBase(Node, ABC):
 
         # Initialize mocap_data with all bones from config (not just tracked ones)
         self.mocap_data = self._initialize_mocap_data()
+        self.mocap_data_is_handled = True
         self.robot_motor_names = {}
         for i in range(self.model.nu):  # 'nu' is the number of actuators (motors)
             motor_name = mj.mj_id2name(self.model, mj.mjtObj.mjOBJ_ACTUATOR, i)
@@ -203,12 +204,44 @@ class AdamMinkBase(Node, ABC):
         self.tasks = self._create_ik_tasks()
         self.limits = self._create_ik_limits()
 
+        self.ik_thread = Thread(target=self.ik_thread_loop, daemon=True)
+        self.ik_thread.start()
+
         # Start Mujoco viewer thread
         if mujoco_sim:
             mj_t = Thread(target=self.mujoco_t, daemon=True)
             mj_t.start()
 
         self.get_logger().info(f"{node_name} node started")
+
+    def ik_thread_loop(self) -> None:
+        """Target function for the IK thread."""
+        self.get_logger().info(f"IK thread loop started")
+        while rclpy.ok():
+            if self.mocap_data_is_handled:
+                time.sleep(0.0001)
+                continue
+            time_start = time.time()
+            self.scale_mocap_data()
+            # time_update_mocap = time.time()
+            # self.get_logger().info(f"Update mocap data time: {time_update_mocap - time_start:.6f} s")
+            self.offset_mocap_data()
+            # time_offset = time.time()
+            # self.get_logger().info(f"Offset mocap data time: {time_offset - time_update_mocap:.6f} s")
+            self._update_ik_targets()
+            # time_update = time.time()
+            # self.get_logger().info(f"Update IK targets time: {time_update - time_offset:.6f} s")
+            self._solve_ik()
+            # time_solve = time.time()
+            # self.get_logger().info(f"Solve IK time: {time_solve - time_update:.6f} s")
+            self._publish_joint_states()
+            time_publish = time.time()
+            # self.get_logger().info(f"Publish joint states time: {time_publish - time_solve:.6f} s")
+            # self.get_logger().info(f"all time: {time_publish - time_start:.6f} s")
+            self.mocap_data_is_handled = True
+            
+        self.get_logger().info(f"IK thread loop ended")
+
 
     @abstractmethod
     def get_bone_frames(self) -> list[str]:
@@ -280,26 +313,9 @@ class AdamMinkBase(Node, ABC):
 
     def cb_transform(self) -> None:
         """Check TF transforms and update IK solution."""
-        time_start = time.time()
         if not self._update_mocap_data():
             return
-        self.scale_mocap_data()
-        # time_update_mocap = time.time()
-        # self.get_logger().info(f"Update mocap data time: {time_update_mocap - time_start:.6f} s")
-        self.offset_mocap_data()
-        # time_offset = time.time()
-        # self.get_logger().info(f"Offset mocap data time: {time_offset - time_update_mocap:.6f} s")
-        self._update_ik_targets()
-        # time_update = time.time()
-        # self.get_logger().info(f"Update IK targets time: {time_update - time_offset:.6f} s")
-        self._solve_ik()
-        # time_solve = time.time()
-        # self.get_logger().info(f"Solve IK time: {time_solve - time_update:.6f} s")
-        self._publish_joint_states()
-        time_publish = time.time()
-        # self.get_logger().info(f"Publish joint states time: {time_publish - time_solve:.6f} s")
-        # self.get_logger().info(f"all time: {time_publish - time_start:.6f} s")
-
+        
     def _update_mocap_data(self) -> bool:
         """Update mocap data from TF transforms."""
         mocap_data_update = {}
@@ -339,7 +355,11 @@ class AdamMinkBase(Node, ABC):
 
         # Update shared data with lock protection
         with self._data_lock:
+            if not self.mocap_data_is_handled:
+                # self.get_logger().warn("Mocap data is not handled, skipping update")
+                return False
             self.mocap_data.update(mocap_data_update)
+            self.mocap_data_is_handled = False
         return True
 
     def _update_ik_targets(self) -> None:
