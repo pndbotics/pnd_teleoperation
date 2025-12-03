@@ -28,7 +28,7 @@ setup(
     maintainer="lh",
     maintainer_email="clvhao@foxmail.com",
     description="ROS2 package for Adam robot inverse kinematics using Mink solver",
-    license="TODO: License declaration",
+    license="Apache-2.0",
     extras_require={
         "test": [
             "pytest",
@@ -37,6 +37,8 @@ setup(
     entry_points={
         "console_scripts": [
             "adam_mink = adam_mink.adam_mink:main",
+            "adam_mink_vr = adam_mink.adam_mink_vr:main",
+            "adam_mink_pro = adam_mink.adam_mink_pro:main",
         ],
     },
 )

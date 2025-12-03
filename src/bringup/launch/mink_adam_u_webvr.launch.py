@@ -39,12 +39,14 @@ def generate_launch_description():
     adam_mink_path = FindPackageShare(package="adam_mink").find("adam_mink")
     ik_cfg_path = os.path.join(
         adam_mink_path,
-        "config/adam_u_vr_ik_config.yaml",
+        "config/adam_u_vr_mink_cfg.yaml",
     )
     adam_mink_node = Node(
         package="adam_mink",
         executable="adam_mink",
         name="adam_mink",
+        output="screen",
+        emulate_tty=True,
         parameters=[
             {"adam_mink_cfg": ik_cfg_path},
             {"adam_model_path": mjcf_model_path},

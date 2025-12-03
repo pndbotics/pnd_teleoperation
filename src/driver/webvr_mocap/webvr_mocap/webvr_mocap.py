@@ -17,7 +17,7 @@ from webvr_mocap.vr.vr_monitor import VRMonitor
 # Constants
 DEFAULT_PUBLISH_RATE = 0.01  # 100 Hz
 DEFAULT_ROBOT_SCALE = 1.0
-DEFAULT_ROBOT_ARM_LENGTH = 0.55  # T-pose arm length in meters
+DEFAULT_ROBOT_ARM_LENGTH = 0.53  # T-pose arm length in meters
 DEFAULT_HEAD_DISTANCE = 0.7  # Default head position distance
 DEFAULT_HAND_DISTANCE = 0.5  # Default hand position distance
 GOAL_BONES = ["Head", "LeftHand", "RightHand"]

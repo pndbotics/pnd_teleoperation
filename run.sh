@@ -16,10 +16,12 @@ NC='\033[0m' # No Color
 # Default values
 ADAM_TYPE="${1:-adam_sp}"
 MOCAP_DRIVER="${2:-noitom}"
+ALGORITHM="${3:-pinocchio}"
 
 # Valid options
 VALID_ADAM_TYPES=("adam_sp" "adam_u" "adam_pro")
 VALID_MOCAP_DRIVERS=("noitom" "zerolab" "vr")
+VALID_ALGORITHMS=("pinocchio" "mink")
 
 # Function to print colored output
 print_info() {
@@ -31,18 +33,18 @@ print_success() {
 }
 
 print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[WARNING]${NC} $1" >&2
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}[ERROR]${NC} $1" >&2
 }
 
 # Function to show usage
 show_usage() {
     echo -e "${BLUE}PND Retarget Launch Script${NC}"
     echo ""
-    echo "Usage: $0 [adam_type] [mocap_driver]"
+    echo "Usage: $0 [adam_type] [mocap_driver] [algorithm]"
     echo ""
     echo "Parameters:"
     echo "  adam_type     Robot type (default: adam_sp)"
@@ -51,10 +53,14 @@ show_usage() {
     echo "  mocap_driver  Motion capture driver (default: noitom)"
     echo "                Valid options: ${VALID_MOCAP_DRIVERS[*]}"
     echo ""
+    echo "  algorithm     Algorithm (default: pinocchio)"
+    echo "                Valid options: ${VALID_ALGORITHMS[*]}"
+    echo ""
     echo "Examples:"
     echo "  $0                          # Use defaults (adam_sp + noitom)"
     echo "  $0 adam_u                   # Use adam_u with default mocap (noitom)"
     echo "  $0 adam_pro zerolab      # Use adam_pro with zerolab mocap"
+    echo "  $0 adam_u vr mink      # Use adam_u with vr mocap and mink algorithm"
     echo ""
 }
 
@@ -77,6 +83,14 @@ validate_mocap_driver() {
     return 1
 }
 
+validate_algorithm() {
+    for valid_algorithm in "${VALID_ALGORITHMS[@]}"; do
+        if [[ "$ALGORITHM" == "$valid_algorithm" ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
 # Function to check if ROS environment is properly sourced
 check_ros_environment() {
     if [ ! -f "/opt/ros/humble/setup.bash" ]; then
@@ -92,29 +106,35 @@ check_ros_environment() {
 
 # Function to get launch command
 get_launch_command() {
-    case "${ADAM_TYPE}_${MOCAP_DRIVER}" in
-        "adam_sp_noitom")
+    case "${ADAM_TYPE}_${MOCAP_DRIVER}_${ALGORITHM}" in
+        "adam_sp_noitom_pinocchio")
             echo "ros2 launch bringup retarget_adam_sp.launch.py"
             ;;
-        "adam_u_noitom")
+        "adam_u_noitom_pinocchio")
             echo "ros2 launch bringup retarget_adam_u.launch.py"
             ;;
-        "adam_pro_noitom")
+        "adam_pro_noitom_pinocchio")
             echo "ros2 launch bringup retarget_adam_pro.launch.py"
             ;;
-        "adam_pro_zerolab")
+        "adam_pro_zerolab_pinocchio")
             echo "ros2 launch bringup retarget_adam_pro_zerolab.launch.py"
             ;;
-        "adam_u_vr")
-            echo "ros2 launch bringup test_mink_vr.launch.py"
+        "adam_u_vr_mink")
+            echo "ros2 launch bringup mink_adam_u_webvr.launch.py"
+            ;;
+        "adam_pro_noitom_mink")
+            echo "ros2 launch bringup mink_adam_pro_noitom.launch.py"
+            # echo "ros2 launch bringup mink_adam_pro_noitom.launch.py visual:=rviz2"
             ;;
         *)
-            print_error "Unsupported combination: ${ADAM_TYPE} + ${MOCAP_DRIVER}"
+            print_error "Unsupported combination: ${ADAM_TYPE} + ${MOCAP_DRIVER} + ${ALGORITHM}"
             print_warning "Currently supported combinations:"
-            print_warning "  adam_sp + noitom"
-            print_warning "  adam_u + noitom"
-            print_warning "  adam_pro + noitom"
-            print_warning "  adam_pro + zerolab"
+            print_warning "  adam_sp + noitom + pinocchio"
+            print_warning "  adam_u + noitom + pinocchio"
+            print_warning "  adam_u + vr + mink"
+            print_warning "  adam_pro + noitom + pinocchio"
+            print_warning "  adam_pro + noitom + mink"
+            print_warning "  adam_pro + zerolab + pinocchio"
             exit 1
             ;;
     esac
@@ -131,7 +151,7 @@ main() {
     print_info "Starting PND Retarget with parameters:"
     print_info "  ADAM Type: ${ADAM_TYPE}"
     print_info "  Mocap Driver: ${MOCAP_DRIVER}"
-    
+    print_info "  Algorithm: ${ALGORITHM}"
     # Validate parameters
     if ! validate_adam_type; then
         print_error "Invalid adam_type: ${ADAM_TYPE}"
@@ -148,7 +168,14 @@ main() {
         show_usage
         exit 1
     fi
-    
+
+    if ! validate_algorithm; then
+        print_error "Invalid algorithm: ${ALGORITHM}"
+        print_error "Valid options: ${VALID_ALGORITHMS[*]}"
+        echo ""
+        show_usage
+        exit 1
+    fi
     # Check ROS environment
     print_info "Checking ROS environment..."
     check_ros_environment
@@ -158,6 +185,7 @@ main() {
     source /opt/ros/humble/setup.bash
     source install/setup.bash
     export ROS_LOCALHOST_ONLY=1
+    source .venv/bin/activate || true
     
     # Get launch command
     LAUNCH_CMD=$(get_launch_command)

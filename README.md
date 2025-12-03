@@ -59,7 +59,10 @@ cd pnd_teleoperation
 
 ```sh
 sudo su
-./run.sh [adam_type] [mocap_driver] # adam_type: adam_sp/adam_u/adam_pro; mocap_driver: noitom;
+./run.sh [adam_type] [mocap_driver] [algorithm] # adam_type: adam_sp/adam_u/adam_pro; mocap_driver: noitom/vr; algorithm: pinocchio/mink;
+# example:
+./run.sh adam_u vr mink
+./run.sh adam_pro noitom pinocchio
 ```
 
 ## preview

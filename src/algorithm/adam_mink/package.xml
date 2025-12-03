@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>ROS2 package for Adam robot inverse kinematics using Mink solver</description>
   <maintainer email="clvhao@foxmail.com">lh</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
   <depend>tf2_ros</depend>
