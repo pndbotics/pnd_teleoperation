@@ -5,14 +5,14 @@ import rclpy
 from typing import Callable, Dict, List, Tuple
 
 import numpy as np
-from adam_mink.adam_mink_base import (
-    AdamMinkBase,
-    DEFAULT_FINGER_POSITION,
-    DEFAULT_TIMER_PERIOD,
-    ROOT_POSE_NUM,
-)
+
+# Type alias for mocap data
+MocapData = Dict[str, Tuple[np.ndarray, np.ndarray]]
+from adam_mink.adam_mink_base import AdamMinkBase
 from adam_mink.constants import (
     ALL_FINGER,
+    DEFAULT_FINGER_POSITION,
+    DEFAULT_TIMER_PERIOD,
     L_GRIP_FINGER,
     L_GRIP_JOINTS,
     L_THUMB_ROTATE_FINGER,
@@ -25,6 +25,7 @@ from adam_mink.constants import (
     R_THUMB_ROTATE_JOINTS,
     R_TRIGGER_FINGER,
     R_TRIGGER_JOINTS,
+    ROOT_POSE_NUM,
 )
 from sensor_msgs.msg import Joy
 from shared_utils.shared_utils import JoyAxesIndices, JoyBtnIndices
@@ -54,18 +55,19 @@ class AdamMinkVRNode(AdamMinkBase):
         self.init_hand_control()
         self.get_logger().info("Adam Mink VR IK node initialized.")
 
-    def cb_transform(self):
+    def transform_callback(self) -> None:
+        """Override transform callback to handle calibration state."""
         if not self.calibrated:
             self.adam_zero_callback()
             return
         else:
-            return super().cb_transform()
+            return super().transform_callback()
 
     def get_bone_frames(self) -> List[str]:
         """Get the list of bone frame names to track for VR."""
         return ["LeftHand", "RightHand", "Head"]
 
-    def _initialize_mocap_data(self) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
+    def _initialize_mocap_data(self) -> MocapData:
         mock_mocap_data = {
             "root": (np.array([0.0, 0.0, 0.0]), np.array([1.0, 0.0, 0.0, 0.0])),
             "Spine2": (np.array([0.0, 0.0, 0.0]), np.array([1.0, 0.0, 0.0, 0.0])),
@@ -160,33 +162,42 @@ class AdamMinkVRNode(AdamMinkBase):
 
     def adam_zero_callback(self) -> None:
         """Smoothly reset all joints to zero position."""
+        if not self.zeroing_initialized:
+            self._initialize_zero_positions()
+        
+        self._update_zero_positions()
+        self._publish_zero_joint_states()
+        self._update_zero_configuration()
+
+    def _initialize_zero_positions(self) -> None:
+        """Initialize current joint positions from configuration for zeroing."""
+        try:
+            if (
+                hasattr(self.configuration, "data")
+                and self.configuration.data.qpos is not None
+            ):
+                # Skip first 7 (root pos/rot) and use joint positions
+                config_positions = self.configuration.data.qpos[
+                    ROOT_POSE_NUM : ROOT_POSE_NUM + self.sim_joint_num
+                ]
+                if len(config_positions) == self.sim_joint_num:
+                    self.current_joint_positions = np.array(config_positions)
+                else:
+                    self.current_joint_positions = np.zeros(self.sim_joint_num)
+            else:
+                self.current_joint_positions = np.zeros(self.sim_joint_num)
+        except Exception as e:
+            self.get_logger().error(f"Error initializing zero positions: {e}")
+            self.current_joint_positions = np.zeros(self.sim_joint_num)
+        
+        self.zeroing_initialized = True
+
+    def _update_zero_positions(self) -> None:
+        """Update joint positions smoothly towards zero with velocity limit."""
         dt = DEFAULT_TIMER_PERIOD
         max_velocity = DEFAULT_ZERO_VELOCITY
         max_step = max_velocity * dt
 
-        # Initialize current positions from configuration on first call
-        if not self.zeroing_initialized:
-            try:
-                if (
-                    hasattr(self.configuration, "data")
-                    and self.configuration.data.qpos is not None
-                ):
-                    # Skip first 7 (root pos/rot) and use joint positions
-                    config_positions = self.configuration.data.qpos[
-                        ROOT_POSE_NUM : ROOT_POSE_NUM + self.sim_joint_num
-                    ]
-                    if len(config_positions) == self.sim_joint_num:
-                        self.current_joint_positions = np.array(config_positions)
-                    else:
-                        self.current_joint_positions = np.zeros(self.sim_joint_num)
-                else:
-                    self.current_joint_positions = np.zeros(self.sim_joint_num)
-            except Exception as e:
-                self.get_logger().error(f"Error initializing zero positions: {e}")
-                self.current_joint_positions = np.zeros(self.sim_joint_num)
-            self.zeroing_initialized = True
-
-        # Smoothly move towards zero
         target_positions = np.zeros(self.sim_joint_num)
         position_diffs = target_positions - self.current_joint_positions
         position_norms = np.abs(position_diffs)
@@ -201,7 +212,8 @@ class AdamMinkVRNode(AdamMinkBase):
                 # Close enough, set to zero
                 self.current_joint_positions[i] = 0.0
 
-        # Update joint state message
+    def _publish_zero_joint_states(self) -> None:
+        """Publish joint states with zero positions."""
         self.joint_state_msg.header.stamp = self.get_clock().now().to_msg()
         self.joint_state_msg.position = (
             list([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
@@ -210,7 +222,8 @@ class AdamMinkVRNode(AdamMinkBase):
         )
         self.joint_state_pub.publish(self.joint_state_msg)
 
-        # Update configuration data (first 7 are root pos/rot, then joint positions)
+    def _update_zero_configuration(self) -> None:
+        """Update configuration data with zero positions."""
         try:
             root_pos_rot = [0.0] * ROOT_POSE_NUM
             self.configuration.data.qpos = root_pos_rot + list(

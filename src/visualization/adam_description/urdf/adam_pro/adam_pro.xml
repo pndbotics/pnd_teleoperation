@@ -241,7 +241,7 @@
             <geom mesh="torso_2" class="collision" />
             <body name="shoulderPitchLeft" pos="0 0.165094 0.25923" quat="0.984808 0.173648 0 0">
               <inertial pos="0.00542694 0.0268987 0.00010792" quat="-0.0545235 0.707235 0.0545271 0.702761" mass="0.216148" diaginertia="0.000380648 0.000322754 0.000187228" />
-              <joint name="shoulderPitch_Left" pos="0 0 0" axis="0 1 0" range="-3.613 2.042" actuatorfrcrange="-65 65" />
+              <joint name="shoulderPitch_Left" pos="0 0 0" axis="0 1 0" range="-2.613 2.042" actuatorfrcrange="-65 65" />
               <geom material="silver" mesh="shoulderPitchLeft" class="visual" />
               <geom mesh="shoulderPitchLeft" class="collision" />
               <body name="shoulderRollLeft" pos="0.0362 0.0435 0" quat="0.984808 -0.173648 0 0">
@@ -385,7 +385,7 @@
             </body>
             <body name="shoulderPitchRight" pos="0 -0.165094 0.25923" quat="0.984808 -0.173648 0 0">
               <inertial pos="0.00536737 -0.0269397 0.00010693" quat="0.0534521 0.70731 -0.0534944 0.702847" mass="0.216487" diaginertia="0.000381338 0.000323123 0.000187559" />
-              <joint name="shoulderPitch_Right" pos="0 0 0" axis="0 1 0" range="-3.613 2.042" actuatorfrcrange="-65 65" />
+              <joint name="shoulderPitch_Right" pos="0 0 0" axis="0 1 0" range="-2.613 2.042" actuatorfrcrange="-65 65" />
               <geom material="silver" mesh="shoulderPitchRight" class="visual" />
               <geom mesh="shoulderPitchRight" class="collision" />
               <body name="shoulderRollRight" pos="0.0362 -0.0435 0" quat="0.984808 0.173648 0 0">

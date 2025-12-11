@@ -50,9 +50,9 @@ def generate_launch_description():
         parameters=[
             {"adam_mink_cfg": ik_cfg_path},
             {"adam_model_path": mjcf_model_path},
-            {"mujoco_sim": False},
-            # {"ik_iter_max": 1},
-            {"ik_damping": 0.001},
+            {"mujoco_sim": True},
+            {"ik_iter_max": 1},
+            {"ik_damping": 0.1},
         ],
         remappings=[
             ("/tf", "/mocap/tf"),

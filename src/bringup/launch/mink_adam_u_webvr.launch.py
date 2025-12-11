@@ -43,8 +43,8 @@ def generate_launch_description():
     )
     adam_mink_node = Node(
         package="adam_mink",
-        executable="adam_mink",
-        name="adam_mink",
+        executable="adam_mink_vr",
+        name="adam_mink_vr",
         output="screen",
         emulate_tty=True,
         parameters=[

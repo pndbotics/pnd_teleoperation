@@ -125,8 +125,20 @@ ik_cfg:
     orientation_cost: 5.11
     pos_offset: [0.0, 0.0, 0.0]
     rot_offset: [0.612, -0.354, -0.612, -0.354]
+  - adam_link_name: "L_index_proximal"
+    bone_name: "LeftHandIndex1"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
   - adam_link_name: "L_index_distal"
     bone_name: "LeftHandIndex2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "L_middle_proximal"
+    bone_name: "LeftHandMiddle1"
     position_cost: 0.00
     orientation_cost: 5.11
     pos_offset: [0.0, 0.0, 0.0]
@@ -137,8 +149,20 @@ ik_cfg:
     orientation_cost: 5.11
     pos_offset: [0.0, 0.0, 0.0]
     rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "L_ring_proximal"
+    bone_name: "LeftHandRing1"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
   - adam_link_name: "L_ring_distal"
     bone_name: "LeftHandRing2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "L_pinky_proximal"
+    bone_name: "LeftHandPinky1"
     position_cost: 0.00
     orientation_cost: 5.11
     pos_offset: [0.0, 0.0, 0.0]
@@ -185,8 +209,20 @@ ik_cfg:
     orientation_cost: 5.11
     pos_offset: [0.0, 0.0, 0.0]
     rot_offset: [0.271, -0.653, -0.271, -0.653]
+  - adam_link_name: "R_index_proximal"
+    bone_name: "RightHandIndex1"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
   - adam_link_name: "R_index_distal"
     bone_name: "RightHandIndex2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "R_middle_proximal"
+    bone_name: "RightHandMiddle1"
     position_cost: 0.00
     orientation_cost: 5.11
     pos_offset: [0.0, 0.0, 0.0]
@@ -197,8 +233,20 @@ ik_cfg:
     orientation_cost: 5.11
     pos_offset: [0.0, 0.0, 0.0]
     rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "R_ring_proximal"
+    bone_name: "RightHandRing1"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
   - adam_link_name: "R_ring_distal"
     bone_name: "RightHandRing2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "R_pinky_proximal"
+    bone_name: "RightHandPinky1"
     position_cost: 0.00
     orientation_cost: 5.11
     pos_offset: [0.0, 0.0, 0.0]
@@ -217,6 +265,33 @@ ik_cfg:
     rot_offset: [-0.5, 0.5, 0.5, 0.5]
 
 collision_cfg: []
+# Example collision configurations (commented out):
+# - collision1: ["wristYawLeft", "wristYawRight", "shoulderYawLeft", "shoulderYawRight"]
+#   collision2: ["torso"]
+#   min_distance: 0.02
+#   detection_distance: 0.03
+# - collision1: ["wristYawLeft"]
+#   collision2: ["wristYawRight"]
+#   min_distance: 0.02
+#   detection_distance: 0.03
 
 velocity_limit: {}
+# Example velocity limits (commented out):
+# "shoulderPitch_Left": 8
+# "shoulderPitch_Right": 8
+# "shoulderRoll_Left": 8
+# "shoulderRoll_Right": 8
+# "shoulderYaw_Left": 8
+# "shoulderYaw_Right": 8
+# "elbow_Left": 8
+# "elbow_Right": 8
+# "wristYaw_Left": 5
+# "wristYaw_Right": 5
+# "wristPitch_Left": 5
+# "wristPitch_Right": 5
+# "wristRoll_Left": 5
+# "wristRoll_Right": 5
+# "waistRoll": 8
+# "waistPitch": 8
+# "waistYaw": 8
         

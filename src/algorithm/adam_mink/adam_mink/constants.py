@@ -1,5 +1,24 @@
 """Constants for Adam robot joint and finger names."""
 
+# Timing and control constants
+DEFAULT_TIMER_PERIOD = 0.01  # 100 Hz
+DEFAULT_JOINT_STATE_QUEUE_SIZE = 10
+DEFAULT_MUJOCO_VIEWER_FREQUENCY = 200.0
+
+# IK solver constants
+DEFAULT_IK_SOLVER = "daqp"
+DEFAULT_IK_DAMPING = 3e-1
+DEFAULT_IK_ITER_MAX = 3
+DEFAULT_IK_ERROR_THRESHOLD = 0.001
+DEFAULT_IK_ITER_WARN_THRESHOLD = 0.8
+
+# Joint and finger constants
+DEFAULT_FINGER_POSITION = 1000.0
+ROOT_POSE_NUM = 7  # x, y, z, qw, qx, qy, qz
+
+# Visualization constants
+DEFAULT_FRAME_SIZE = 0.1
+
 # Left hand thumb rotate joints (base names)
 _L_THUMB_ROTATE_JOINTS_BASE = [
     "L_thumb_MCP_joint1",
