@@ -14,9 +14,9 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Default values
-ADAM_TYPE="${1:-adam_sp}"
+ADAM_TYPE="${1:-adam_pro}"
 MOCAP_DRIVER="${2:-noitom}"
-ALGORITHM="${3:-pinocchio}"
+ALGORITHM="${3:-mink}"
 
 # Valid options
 VALID_ADAM_TYPES=("adam_sp" "adam_u" "adam_pro")
