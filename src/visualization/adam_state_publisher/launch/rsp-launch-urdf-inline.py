@@ -47,10 +47,12 @@ def generate_launch_description():
   </link>
 </robot>"""
 
-    params = {'robot_description': robot_desc}
-    rsp = launch_ros.actions.Node(package='adam_state_publisher',
-                                  executable='adam_state_publisher',
-                                  output='both',
-                                  parameters=[params])
+    params = {"robot_description": robot_desc}
+    rsp = launch_ros.actions.Node(
+        package="adam_state_publisher",
+        executable="adam_state_publisher",
+        output="both",
+        parameters=[params],
+    )
 
     return launch.LaunchDescription([rsp])

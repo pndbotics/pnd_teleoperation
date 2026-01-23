@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-from tf2_ros import Buffer, TransformListener
-from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
-from rclpy.duration import Duration
-import yaml
 import os
+
+import rclpy
+import yaml
+from rclpy.duration import Duration
+from rclpy.node import Node
+from tf2_ros import (
+    Buffer,
+    ConnectivityException,
+    ExtrapolationException,
+    LookupException,
+    TransformListener,
+)
 
 dump_index = 0
 

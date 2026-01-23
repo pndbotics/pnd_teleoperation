@@ -1,0 +1,222 @@
+human_scale_table:
+  Hips: 1.0
+  Spine2: 1.0
+  Head: 1.0
+
+  LeftUpLeg: 1.1
+  RightUpLeg: 1.1
+  LeftLeg: 1.0
+  RightLeg: 1.0
+  LeftFoot: 1.0
+  RightFoot: 1.0
+
+  LeftArm: 0.9
+  RightArm: 0.9
+  LeftForeArm: 0.95
+  RightForeArm: 0.95
+  LeftHand: 1.1
+  RightHand: 1.1
+
+  LeftHandThumb1: 1.0
+  LeftHandThumb2: 1.0
+  LeftHandThumb3: 1.0
+  LeftHandIndex1: 1.0
+  LeftHandIndex2: 1.0
+  LeftHandMiddle1: 1.0
+  LeftHandMiddle2: 1.0
+  LeftHandRing1: 1.0
+  LeftHandRing2: 1.0
+  LeftHandPinky1: 1.0
+  LeftHandPinky2: 1.0 
+  RightHandThumb1: 1.0
+  RightHandThumb2: 1.0
+  RightHandThumb3: 1.0
+  RightHandIndex1: 1.0
+  RightHandIndex2: 1.0
+  RightHandMiddle1: 1.0
+  RightHandMiddle2: 1.0
+  RightHandRing1: 1.0
+  RightHandRing2: 1.0
+  RightHandPinky1: 1.0
+  RightHandPinky2: 1.0
+
+ik_cfg:
+  - adam_link_name: "pelvis"
+    bone_name: "Hips"
+    position_cost: 100.0
+    orientation_cost: 11.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+  - adam_link_name: "thighLeft"
+    bone_name: "LeftUpLeg"
+    position_cost: 10.0
+    orientation_cost: 5.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+  - adam_link_name: "shinLeft"
+    bone_name: "LeftLeg"
+    position_cost: 10.0
+    orientation_cost: 5.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+  - adam_link_name: "toeLeft"
+    bone_name: "LeftFoot"
+    position_cost: 50.0
+    orientation_cost: 16.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+  - adam_link_name: "thighRight"
+    bone_name: "RightUpLeg"
+    position_cost: 10.0
+    orientation_cost: 5.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+  - adam_link_name: "shinRight"
+    bone_name: "RightLeg"
+    position_cost: 10.0
+    orientation_cost: 5.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+  - adam_link_name: "toeRight"
+    bone_name: "RightFoot"
+    position_cost: 50.0
+    orientation_cost: 16.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+  - adam_link_name: "torso"
+    bone_name: "Spine2"
+    position_cost: 50.0
+    orientation_cost: 50.0
+    pos_offset: [0.0, 0.0, -0.2]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+  - adam_link_name: "shoulderYawLeft"
+    bone_name: "LeftArm"
+    position_cost: 20.0
+    orientation_cost: 30
+    pos_offset: [0.0, 0.03, -0.06]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "elbowLeft"
+    bone_name: "LeftForeArm"
+    position_cost: 0.0
+    orientation_cost: 24.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "wristRollLeft"
+    bone_name: "LeftHand"
+    position_cost: 77.0
+    orientation_cost: 40.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "L_thumb_proximal"
+    bone_name: "LeftHandThumb1"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.653, -0.271, -0.653, -0.271]
+  - adam_link_name: "L_thumb_intermediate"
+    bone_name: "LeftHandThumb2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.612, -0.354, -0.612, -0.354]
+  - adam_link_name: "L_thumb_distal"
+    bone_name: "LeftHandThumb3"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.612, -0.354, -0.612, -0.354]
+  - adam_link_name: "L_index_distal"
+    bone_name: "LeftHandIndex2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "L_middle_distal"
+    bone_name: "LeftHandMiddle2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "L_ring_distal"
+    bone_name: "LeftHandRing2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "L_pinky_distal"
+    bone_name: "LeftHandPinky2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.70710678, 0.0, 0.70710678, 0.0]
+  - adam_link_name: "shoulderYawRight"
+    bone_name: "RightArm"
+    position_cost: 20.0
+    orientation_cost: 30
+    pos_offset: [0.0, -0.03, -0.06]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "elbowRight"
+    bone_name: "RightForeArm"
+    position_cost: 0.0
+    orientation_cost: 24.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "wristRollRight"
+    bone_name: "RightHand"
+    position_cost: 77.0
+    orientation_cost: 40.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "R_thumb_proximal"
+    bone_name: "RightHandThumb1"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.271, -0.653, -0.271, -0.653]
+  - adam_link_name: "R_thumb_intermediate"
+    bone_name: "RightHandThumb2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.271, -0.653, -0.271, -0.653]
+  - adam_link_name: "R_thumb_distal"
+    bone_name: "RightHandThumb3"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.271, -0.653, -0.271, -0.653]
+  - adam_link_name: "R_index_distal"
+    bone_name: "RightHandIndex2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "R_middle_distal"
+    bone_name: "RightHandMiddle2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "R_ring_distal"
+    bone_name: "RightHandRing2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "R_pinky_distal"
+    bone_name: "RightHandPinky2"
+    position_cost: 0.00
+    orientation_cost: 5.11
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0, 0.70710678, 0.0, 0.70710678]
+  - adam_link_name: "neckPitch_link"
+    bone_name: "Head"
+    position_cost: 45.0
+    orientation_cost: 30.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [-0.5, 0.5, 0.5, 0.5]
+
+collision_cfg: []
+
+velocity_limit: {}
+        

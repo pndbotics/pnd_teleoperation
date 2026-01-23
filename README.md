@@ -2,11 +2,11 @@
 
 ## Supported Robot Models
 
-| Robot Model | Noitom | VR  | Description |
-| ----------- | ------ | --- | ----------- |
-| Adam SP     | ✅      |     |             |
-| Adam Pro    | ✅      |     |             |
-| Adam U      | ✅      |     |             |
+| Robot Model | Noitom | VR   | Description |
+| ----------- | ------ | ---- | ----------- |
+| Adam SP     | ✅      | TODO |             |
+| Adam Pro    | ✅      | TODO |             |
+| Adam U      | ✅      | ✅    |             |
 
 ## env
 
@@ -59,7 +59,10 @@ cd pnd_teleoperation
 
 ```sh
 sudo su
-./run.sh [adam_type] [mocap_driver] # adam_type: adam_sp/adam_u/adam_pro; mocap_driver: noitom;
+./run.sh [adam_type] [mocap_driver] [algorithm] # adam_type: adam_sp/adam_u/adam_pro; mocap_driver: noitom/vr; algorithm: pinocchio/mink;
+# example:
+./run.sh adam_u vr mink
+./run.sh adam_pro noitom pinocchio
 ```
 
 ## preview
@@ -67,6 +70,16 @@ sudo su
 ```sh
 sudo su
 ./preview.sh
+```
+
+## Options
+
+### webvr
+
+```sh
+pip install uv --user
+uv sync
+source .venv/bin/activate
 ```
 
 ## use docker

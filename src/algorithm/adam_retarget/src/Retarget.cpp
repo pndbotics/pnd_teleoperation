@@ -5,7 +5,7 @@ const std::unordered_map<std::string, FunctionType> function_type_map = {{"Seria
                                                                          {"CodeGeneration", FunctionType::CODEGEN}};
 
 RetargetOptimization::RetargetOptimization(std::string casadi_function_path, const rclcpp::Logger& logger)
-    : m_logger(m_logger) {
+    : m_logger(logger) {
   // load example io data from json
   json retarget_config;
   std::filesystem::path config_path(casadi_function_path);
@@ -15,11 +15,17 @@ RetargetOptimization::RetargetOptimization(std::string casadi_function_path, con
 
   if (!retarget_config_file.is_open()) {
     RCLCPP_ERROR(m_logger, "Error: Could not open file %s", casadi_function_path.c_str());
-  } else {
-    RCLCPP_INFO(m_logger, "File opened successfully");
+    throw std::runtime_error("Failed to open config file: " + casadi_function_path);
   }
+  RCLCPP_INFO(m_logger, "File opened successfully: %s", casadi_function_path.c_str());
 
-  retarget_config_file >> retarget_config;
+  try {
+    retarget_config_file >> retarget_config;
+  } catch (const json::parse_error& e) {
+    retarget_config_file.close();
+    RCLCPP_ERROR(m_logger, "JSON parse error in file %s: %s", casadi_function_path.c_str(), e.what());
+    throw std::runtime_error("Failed to parse JSON config file: " + casadi_function_path + " - " + e.what());
+  }
   retarget_config_file.close();
 
   auto opti_func_str_list = retarget_config["opti_function"];

@@ -1,8 +1,9 @@
 import os
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
 from launch.conditions import LaunchConfigurationEquals
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -33,7 +34,7 @@ def generate_launch_description():
         output="screen",
         parameters=[{"robot_description": robot_desc, "root_link": "lifting_Columns"}],
     )
-    
+
     adam_reterget_pkg_share = FindPackageShare(package="adam_retarget").find(
         "adam_retarget"
     )

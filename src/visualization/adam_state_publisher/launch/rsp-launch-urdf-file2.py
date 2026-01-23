@@ -32,22 +32,23 @@
 
 import os
 
-from ament_index_python.packages import get_package_share_directory
-
 import launch
 import launch_ros.actions
+from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    urdf_dir = os.path.join(get_package_share_directory('adam_state_publisher'), 'urdf')
-    urdf_file = os.path.join(urdf_dir, 'test-desc.urdf')
-    with open(urdf_file, 'r') as infp:
+    urdf_dir = os.path.join(get_package_share_directory("adam_state_publisher"), "urdf")
+    urdf_file = os.path.join(urdf_dir, "test-desc.urdf")
+    with open(urdf_file, "r") as infp:
         robot_desc = infp.read()
 
-    params = {'robot_description': robot_desc}
-    rsp = launch_ros.actions.Node(package='adam_state_publisher',
-                                  executable='adam_state_publisher',
-                                  output='both',
-                                  parameters=[params])
+    params = {"robot_description": robot_desc}
+    rsp = launch_ros.actions.Node(
+        package="adam_state_publisher",
+        executable="adam_state_publisher",
+        output="both",
+        parameters=[params],
+    )
 
     return launch.LaunchDescription([rsp])

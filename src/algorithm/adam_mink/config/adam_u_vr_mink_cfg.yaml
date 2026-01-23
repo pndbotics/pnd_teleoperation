@@ -1,0 +1,76 @@
+
+ik_cfg:
+  - adam_link_name: "lifting_Columns"
+    bone_name: "root"
+    position_cost: 1000.0
+    orientation_cost: 1000.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "torso"
+    bone_name: "Spine2"
+    position_cost: 0.0
+    orientation_cost: 70.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  # LeftArm/RightArm: low weight soft constraints since VR doesn't track these
+  # IK will primarily solve from hand tracking, shoulders will be naturally determined
+  - adam_link_name: "shoulderYawLeft"
+    bone_name: "LeftArm"
+    position_cost: 0.0
+    orientation_cost: 2.0  # Very low weight - soft constraint only
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "shoulderYawRight"
+    bone_name: "RightArm"
+    position_cost: 0.0
+    orientation_cost: 2.0  # Very low weight - soft constraint only
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "neckPitch"
+    bone_name: "Head"
+    position_cost: 10.0
+    orientation_cost: 20.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "wristRollLeft"
+    bone_name: "LeftHand"
+    position_cost: 20.0  # Increased for better hand position tracking
+    orientation_cost: 18.0  # Increased for better hand orientation tracking
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.866, 0.0, -0.5, 0.0]
+  - adam_link_name: "wristRollRight"
+    bone_name: "RightHand"
+    position_cost: 20.0  # Increased for better hand position tracking
+    orientation_cost: 18.0  # Increased for better hand orientation tracking
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.866, 0.0, -0.5, 0.0]
+
+collision_cfg:
+  - collision1: ["wristYawLeft", "wristYawRight", "shoulderYawLeft", "shoulderYawRight"]
+    collision2: ["torso"]
+    min_distance: 0.02
+    detection_distance: 0.03
+  - collision1: ["wristYawLeft"]
+    collision2: ["wristYawRight"]
+    min_distance: 0.02
+    detection_distance: 0.03
+
+velocity_limit:
+  "shoulderPitch_Left": 10
+  "shoulderPitch_Right": 10
+  "shoulderRoll_Left": 10
+  "shoulderRoll_Right": 10
+  # "shoulderYaw_Left": 10
+  # "shoulderYaw_Right": 10
+  "elbow_Left": 10  # Velocity limit for smooth elbow movement during rapid arm bending
+  "elbow_Right": 10  # Velocity limit for smooth elbow movement during rapid arm bending
+  # "wristYaw_Left": 9
+  # "wristYaw_Right": 9
+  # "wristPitch_Left": 9
+  # "wristPitch_Right": 9
+  # "wristRoll_Left": 9
+  # "wristRoll_Right": 9
+  "waistRoll": 8
+  "waistPitch": 8
+  "waistYaw": 8
+        

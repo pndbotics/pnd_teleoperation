@@ -30,59 +30,60 @@ import os
 import unittest
 
 import launch
-from launch import LaunchDescription
-from launch_ros.actions import Node
 import launch_testing
 import launch_testing.actions
 import launch_testing.asserts
+from launch import LaunchDescription
+from launch_ros.actions import Node
 
 
 def generate_test_description():
     test_exe_arg = launch.actions.DeclareLaunchArgument(
-        'test_exe',
-        description='Path to executable test',
+        "test_exe",
+        description="Path to executable test",
     )
 
     process_under_test = launch.actions.ExecuteProcess(
-        cmd=[launch.substitutions.LaunchConfiguration('test_exe')],
-        output='screen',
+        cmd=[launch.substitutions.LaunchConfiguration("test_exe")],
+        output="screen",
     )
 
-    urdf_file = os.path.join(os.path.dirname(__file__), 'two_links_fixed_joint.urdf')
-    with open(urdf_file, 'r') as infp:
+    urdf_file = os.path.join(os.path.dirname(__file__), "two_links_fixed_joint.urdf")
+    with open(urdf_file, "r") as infp:
         robot_desc = infp.read()
 
-    params = {'robot_description': robot_desc}
+    params = {"robot_description": robot_desc}
     node_adam_state_publisher = Node(
-        package='adam_state_publisher',
-        executable='adam_state_publisher',
-        output='screen',
-        parameters=[params]
+        package="adam_state_publisher",
+        executable="adam_state_publisher",
+        output="screen",
+        parameters=[params],
     )
 
-    return LaunchDescription([
-        node_adam_state_publisher,
-        test_exe_arg,
-        process_under_test,
-        launch_testing.util.KeepAliveProc(),
-        launch_testing.actions.ReadyToTest(),
-    ]), locals()
+    return (
+        LaunchDescription(
+            [
+                node_adam_state_publisher,
+                test_exe_arg,
+                process_under_test,
+                launch_testing.util.KeepAliveProc(),
+                launch_testing.actions.ReadyToTest(),
+            ]
+        ),
+        locals(),
+    )
 
 
 class TestFixedJoint(unittest.TestCase):
-
     def test_termination(self, process_under_test, proc_info):
         proc_info.assertWaitForShutdown(process=process_under_test, timeout=(10))
 
 
 @launch_testing.post_shutdown_test()
 class FixedJointTestAfterShutdown(unittest.TestCase):
-
     def test_exit_code(self, process_under_test, proc_info):
         # Check that all processes in the launch (in this case, there's just one) exit
         # with code 0
         launch_testing.asserts.assertExitCodes(
-            proc_info,
-            [launch_testing.asserts.EXIT_OK],
-            process_under_test
+            proc_info, [launch_testing.asserts.EXIT_OK], process_under_test
         )
