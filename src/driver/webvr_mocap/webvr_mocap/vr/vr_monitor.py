@@ -15,9 +15,7 @@ from pathlib import Path
 from typing import Optional
 
 # Set the absolute path to the xlevr folder
-XLEVR_PATH = (
-    "/home/lh/ws/pnd/gitlab/retarget/pnd-retarget/src/driver/webvr_mocap/webvr_mocap/vr"
-)
+XLEVR_PATH = "/Users/weisongchao/Documents/pnd/webvr/pnd-retarget/src/driver/webvr_mocap/webvr_mocap/vr"
 
 
 def setup_xlevr_environment():
@@ -93,24 +91,44 @@ class SimpleAPIHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         """Handle GET requests."""
         if self.path == "/" or self.path == "/index.html":
-            # Serve main page from web-ui directory
-            self.serve_file("web-ui/index.html", "text/html")
+            # Serve main page from web-ui/dist directory
+            self.serve_file("web-ui/dist/index.html", "text/html")
         elif self.path.endswith(".css"):
-            # Serve CSS files from web-ui directory
-            self.serve_file(f"web-ui{self.path}", "text/css")
+            # Serve CSS files from web-ui/dist directory
+            self.serve_file(f"web-ui/dist{self.path}", "text/css")
         elif self.path.endswith(".js"):
-            # Serve JS files from web-ui directory
-            self.serve_file(f"web-ui{self.path}", "application/javascript")
+            # Serve JS files from web-ui/dist directory
+            self.serve_file(f"web-ui/dist{self.path}", "application/javascript")
+        elif self.path.endswith(".json"):
+            # Serve JSON files from web-ui/dist directory
+            self.serve_file(f"web-ui/dist{self.path}", "application/json")
         elif self.path.endswith(".ico"):
-            self.serve_file(self.path[1:], "image/x-icon")
-        elif self.path.endswith((".jpg", ".jpeg", ".png", ".gif")):
-            # Serve image files from web-ui directory
+            # Serve favicon from web-ui/dist directory
+            self.serve_file(f"web-ui/dist{self.path}", "image/x-icon")
+        elif self.path.endswith((".jpg", ".jpeg", ".png", ".gif", ".svg")):
+            # Serve image files from web-ui/dist directory
             content_type = (
                 "image/jpeg"
                 if self.path.endswith((".jpg", ".jpeg"))
-                else "image/png" if self.path.endswith(".png") else "image/gif"
+                else "image/png"
+                if self.path.endswith(".png")
+                else "image/svg+xml"
+                if self.path.endswith(".svg")
+                else "image/gif"
             )
-            self.serve_file(f"web-ui{self.path}", content_type)
+            self.serve_file(f"web-ui/dist{self.path}", content_type)
+        elif self.path.endswith((".woff", ".woff2", ".ttf", ".eot")):
+            # Serve font files from web-ui/dist directory
+            content_type = (
+                "font/woff"
+                if self.path.endswith(".woff")
+                else "font/woff2"
+                if self.path.endswith(".woff2")
+                else "font/ttf"
+                if self.path.endswith(".ttf")
+                else "application/vnd.ms-fontobject"
+            )
+            self.serve_file(f"web-ui/dist{self.path}", content_type)
         else:
             self.send_error(404, "Not found")
 
@@ -157,9 +175,9 @@ class SimpleHTTPSServer:
             self.httpd.web_root_path = self.web_root_path
 
             # Setup SSL
-            context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-            context.load_cert_chain("cert.pem", "key.pem")
-            self.httpd.socket = context.wrap_socket(self.httpd.socket, server_side=True)
+            # context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+            # context.load_cert_chain("cert.pem", "key.pem")
+            # self.httpd.socket = context.wrap_socket(self.httpd.socket, server_side=True)
 
             # Start server in a separate thread
             self.server_thread = threading.Thread(
@@ -271,13 +289,11 @@ class VRMonitor:
             # Display connection information
             host_display = (
                 get_local_ip()
-                if self.config.host_ip == "0.0.0.0"
+                if self.config.host_ip == "127.0.0.1"
                 else self.config.host_ip
             )
             print(f"📱 Open your VR headset browser and navigate to:")
-            print(f"   https://{host_display}:{self.config.https_port}")
-            print("🎯 Press Ctrl+C to stop monitoring")
-            print()
+            print(f"   https://{host_display}/webvr")
 
             # Monitor command queue
             await self.monitor_commands()
@@ -299,9 +315,7 @@ class VRMonitor:
         while self.is_running:
             try:
                 # Wait for command with 3-second timeout
-                goal = await asyncio.wait_for(
-                    self.command_queue.get(), timeout=3.0
-                )
+                goal = await asyncio.wait_for(self.command_queue.get(), timeout=3.0)
 
                 # Update latest goal with thread safety
                 with self._goal_lock:
@@ -359,7 +373,7 @@ class VRMonitor:
 
     def get_left_goal_nowait(self):
         """Return the latest goal if available, else None.
-        
+
         Note: The goal contains all controller data including left controller.
         """
         goal = self.get_latest_goal_nowait()
@@ -369,7 +383,7 @@ class VRMonitor:
 
     def get_right_goal_nowait(self):
         """Return the latest goal if available, else None.
-        
+
         Note: The goal contains all controller data including right controller.
         """
         goal = self.get_latest_goal_nowait()

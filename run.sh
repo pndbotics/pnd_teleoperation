@@ -104,6 +104,14 @@ check_ros_environment() {
     fi
 }
 
+# Function to check if Caddy is installed
+check_caddy_installed() {
+    if ! command -v caddy &> /dev/null; then
+        return 1
+    fi
+    return 0
+}
+
 # Function to get launch command
 get_launch_command() {
     case "${ADAM_TYPE}_${MOCAP_DRIVER}_${ALGORITHM}" in
@@ -189,6 +197,29 @@ main() {
     
     # Get launch command
     LAUNCH_CMD=$(get_launch_command)
+    
+    # Start Caddy in background for adam_u_vr_mink mode
+    if [[ "${ADAM_TYPE}_${MOCAP_DRIVER}_${ALGORITHM}" == "adam_u_vr_mink" ]]; then
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        CADDY_SCRIPT="${SCRIPT_DIR}/scripts/start_caddy.sh"
+        
+        # Check if Caddy is installed
+        if ! check_caddy_installed; then
+            print_error "Caddy is not installed or not in PATH"
+            print_info "Please install Caddy first. You can install it from https://caddyserver.com/docs/install#debian-ubuntu-raspbian"
+            exit 1
+        fi
+        
+        if [ -f "$CADDY_SCRIPT" ]; then
+            print_info "Starting Caddy in background..."
+            CADDY_LOG=$(mktemp)
+            nohup bash "$CADDY_SCRIPT" > "$CADDY_LOG" 2>&1 &
+            CADDY_PID=$!
+            print_success "Caddy started in background (PID: $CADDY_PID)"
+        else
+            print_error "Caddy script not found at: $CADDY_SCRIPT"
+        fi
+    fi
     
     print_success "Environment configured successfully"
     print_info "Launching: ${LAUNCH_CMD}"

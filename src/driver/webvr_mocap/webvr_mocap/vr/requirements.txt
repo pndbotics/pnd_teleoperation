@@ -1,6 +1,0 @@
-numpy
-torch
-scipy
-websockets
-pyyaml
-pynput

@@ -3,12 +3,12 @@ from typing import Any, Union
 
 def count_elements(data: Union[dict, list, Any]) -> int:
     """Count the total number of elements in nested data structures.
-    
+
     Recursively counts elements in dictionaries and lists.
-    
+
     Args:
         data: The data structure to count (dict, list, or any other type).
-        
+
     Returns:
         The total count of elements. For non-container types, returns 1.
     """

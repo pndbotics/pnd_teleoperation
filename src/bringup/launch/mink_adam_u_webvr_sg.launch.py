@@ -21,10 +21,10 @@ def generate_launch_description():
 
     # urdf
     package_name = "adam_description"
-    urdf_name = "urdf/adam_pro/adam_pro.urdf"
+    urdf_name = "urdf/adam_u/adam_u.urdf"
     urdf_pkg_share = FindPackageShare(package=package_name).find(package_name)
     urdf_model_path = os.path.join(urdf_pkg_share, urdf_name)
-    mjcf_model_path = os.path.join(urdf_pkg_share, "urdf/adam_pro/adam_pro.xml")
+    mjcf_model_path = os.path.join(urdf_pkg_share, "urdf/adam_u/adam_u.xml")
 
     with open(urdf_model_path, "r") as infp:
         robot_desc = infp.read()
@@ -33,26 +33,24 @@ def generate_launch_description():
         executable="adam_state_publisher",
         name="robot_state_publisher",
         output="screen",
-        parameters=[{"robot_description": robot_desc}],
+        parameters=[{"robot_description": robot_desc, "root_link": "lifting_Columns"}],
     )
 
     adam_mink_path = FindPackageShare(package="adam_mink").find("adam_mink")
     ik_cfg_path = os.path.join(
         adam_mink_path,
-        "config/adam_pro_noitom_mink_cfg.yaml",
+        "config/adam_u_vr_mink_cfg.yaml",
     )
     adam_mink_node = Node(
         package="adam_mink",
-        executable="adam_mink_pro",
-        name="adam_mink_pro",
+        executable="adam_mink_vr_sg",
+        name="adam_mink_vr_sg",
         output="screen",
         emulate_tty=True,
         parameters=[
             {"adam_mink_cfg": ik_cfg_path},
             {"adam_model_path": mjcf_model_path},
             {"mujoco_sim": False},
-            {"ik_iter_max": 1},
-            {"ik_damping": 0.1},
         ],
         remappings=[
             ("/tf", "/mocap/tf"),
@@ -76,12 +74,16 @@ def generate_launch_description():
     )
     ld.add_action(rviz_node)
 
-    noitom_mocap = Node(
-        package="noitom_mocap",
-        executable="noitom_mocap",
-        name="noitom_robot_tf_broadcaster",
-        remappings=[("/tf", "/mocap/tf")],
+    webvr_mocap_node = Node(
+        package="webvr_mocap",
+        executable="webvr_mocap",
+        name="webvr_mocap",
+        output="screen",
+        emulate_tty=True,
+        remappings=[
+            ("/tf", "/mocap/tf"),
+        ],
     )
-    ld.add_action(noitom_mocap)
+    ld.add_action(webvr_mocap_node)
 
     return ld

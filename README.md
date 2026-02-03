@@ -133,3 +133,8 @@ ros2 bag record <topic_name>
 ```sh
 ros2 run tests_bag play_bag --ros-args -p bag_path:=rosbag2_2025_03_28-09_04_32/
 ```
+
+## Credits
+
+- [telegrip](https://github.com/DipFlip/telegrip)
+- [XLeRobot](https://github.com/Vector-Wangel/XLeRobot)

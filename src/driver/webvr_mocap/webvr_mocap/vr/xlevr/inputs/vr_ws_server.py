@@ -161,11 +161,14 @@ class VRWebSocketServer(BaseInputProvider):
         port = self.config.websocket_port
 
         try:
+            # self.server = await websockets.serve(
+            #     self.websocket_handler, host, port, ssl=ssl_context
+            # )
             self.server = await websockets.serve(
-                self.websocket_handler, host, port, ssl=ssl_context
+                self.websocket_handler, "127.0.0.1", port
             )
             self.is_running = True
-            logger.info(f"VR WebSocket server running on wss://{host}:{port}")
+            logger.debug(f"VR WebSocket server running on wss://{host}:{port}")
         except Exception as e:
             logger.error(f"Failed to start WebSocket server: {e}")
 
@@ -180,6 +183,28 @@ class VRWebSocketServer(BaseInputProvider):
     async def websocket_handler(self, websocket, path=None):
         """Handle WebSocket connections from VR controllers."""
         client_address = websocket.remote_address
+
+        # 检查是否已经有VR头显连接，只允许一个连接
+        if len(self.clients) > 0:
+            logger.warning(
+                f"VR client {client_address} attempted to connect, but server already has {len(self.clients)} active connection(s). Rejecting."
+            )
+            try:
+                await websocket.send(
+                    json.dumps(
+                        {
+                            "error": "VR_HEADSET_LIMIT",
+                            "message": "Only one VR headset connection is allowed. Another headset is already connected.",
+                        }
+                    )
+                )
+                await websocket.close(
+                    code=1008, reason="Only one VR headset connection allowed"
+                )
+            except Exception as e:
+                logger.error(f"Error rejecting connection: {e}")
+            return
+
         logger.info(f"VR client connected: {client_address}")
         self.clients.add(websocket)
 
@@ -293,9 +318,7 @@ class VRWebSocketServer(BaseInputProvider):
                     },
                 )
                 await self.send_goal(reset_goal)
-                logger.info(
-                    f"🎯 {hand.upper()} auto-activated - controlling {hand} arm"
-                )
+                logger.info(f"🎯 {hand.upper()} auto-activated - controlling {hand} arm")
 
             # 计算目标位置 - 改为绝对位置控制
             position_array = np.array(

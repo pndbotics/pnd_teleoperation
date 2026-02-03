@@ -11,3 +11,7 @@ MUJOCO_LOG.TXT
 
 # python
 .venv
+
+node_modules
+.DS_Store
+.idea

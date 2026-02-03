@@ -13,7 +13,7 @@ import yaml
 
 # Default configuration values (fallback if YAML file doesn't exist)
 DEFAULT_CONFIG = {
-    "network": {"https_port": 8443, "websocket_port": 8442, "host_ip": "0.0.0.0"},
+    "network": {"https_port": 8443, "websocket_port": 8442, "host_ip": "127.0.0.1"},
     "ssl": {"certfile": "cert.pem", "keyfile": "key.pem"},
     "robot": {
         "left_arm": {"name": "Left Arm", "port": "/dev/ttyACM0", "enabled": True},

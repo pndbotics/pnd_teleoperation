@@ -15,35 +15,39 @@ RGBA_COLORS = [[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1]]  # Red, Green, Blue
 
 def quat_mul_single(q1: np.ndarray, q2: np.ndarray) -> np.ndarray:
     """Fast quaternion multiplication for single quaternions (w, x, y, z format).
-        
+
     Args:
         q1: First quaternion (w, x, y, z)
         q2: Second quaternion (w, x, y, z)
-            
+
     Returns:
         Result quaternion (w, x, y, z)
     """
     w1, x1, y1, z1 = q1[0], q1[1], q1[2], q1[3]
     w2, x2, y2, z2 = q2[0], q2[1], q2[2], q2[3]
-        
-    return np.array([
-        w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,  # w
-        w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,  # x
-        w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,  # y
-        w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,  # z
-    ], dtype=np.float64)
-    
+
+    return np.array(
+        [
+            w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2,  # w
+            w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2,  # x
+            w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2,  # y
+            w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2,  # z
+        ],
+        dtype=np.float64,
+    )
+
+
 def quat_rotate_vector(quat: np.ndarray, vec: np.ndarray) -> np.ndarray:
     """Rotate a vector by a quaternion using pure numpy (w, x, y, z format).
 
     Args:
         quat: Rotation quaternion (w, x, y, z)
         vec: Vector to rotate (x, y, z)
-            
+
     Returns:
         Rotated vector (x, y, z)
     """
-    vec_quat = np.array([0.0, vec[0], vec[1], vec[2]], dtype=np.float64)    
+    vec_quat = np.array([0.0, vec[0], vec[1], vec[2]], dtype=np.float64)
     q_conj = np.array([quat[0], -quat[1], -quat[2], -quat[3]], dtype=np.float64)
     temp = quat_mul_single(quat, vec_quat)
     rotated_vec = quat_mul_single(temp, q_conj)
