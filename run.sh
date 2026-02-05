@@ -116,22 +116,22 @@ check_caddy_installed() {
 get_launch_command() {
     case "${ADAM_TYPE}_${MOCAP_DRIVER}_${ALGORITHM}" in
         "adam_sp_noitom_pinocchio")
-            echo "ros2 launch bringup retarget_adam_sp.launch.py"
+            echo "ros2 launch bringup pinocchio-adam_sp-noitom.launch.py"
             ;;
         "adam_u_noitom_pinocchio")
-            echo "ros2 launch bringup retarget_adam_u.launch.py"
+            echo "ros2 launch bringup pinocchio-adam_u-noitom.launch.py"
             ;;
         "adam_pro_noitom_pinocchio")
-            echo "ros2 launch bringup retarget_adam_pro.launch.py"
+            echo "ros2 launch bringup pinocchio-adam_pro-noitom.launch.py"
             ;;
         "adam_pro_zerolab_pinocchio")
-            echo "ros2 launch bringup retarget_adam_pro_zerolab.launch.py"
+            echo "ros2 launch bringup pinocchio-adam_pro-zerolab.launch.py"
             ;;
         "adam_u_vr_mink")
-            echo "ros2 launch bringup mink_adam_u_webvr.launch.py"
+            echo "ros2 launch bringup mink-adam_u-webvr.launch.py"
             ;;
         "adam_pro_noitom_mink")
-            echo "ros2 launch bringup mink_adam_pro_noitom.launch.py"
+            echo "ros2 launch bringup mink-adam_pro-noitom.launch.py"
             # echo "ros2 launch bringup mink_adam_pro_noitom.launch.py visual:=rviz2"
             ;;
         *)

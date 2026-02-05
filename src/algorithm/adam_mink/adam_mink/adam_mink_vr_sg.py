@@ -88,8 +88,12 @@ class AdamMinkVRNodeSG(AdamMinkVRNode):
             self.hands_scale_funcs[name] = lambda: 0.0
         for name in R_THUMB_ROTATE_FINGER:
             self.hands_scale_funcs[name] = lambda: 0.0
-        self.hands_scale_funcs["dof_pos/hand_thumb_1_Left"] = lambda: 1000 - 1000 * (1 - np.exp(-5 * self.joy_axes.get(JoyAxesIndices.L_trigger, 0.0)))/(1 - np.exp(-5))
-        self.hands_scale_funcs["dof_pos/hand_thumb_1_Right"] = lambda: 1000 - 1000 * (1 - np.exp(-5 * self.joy_axes.get(JoyAxesIndices.R_trigger, 0.0)))/(1 - np.exp(-5))
+        self.hands_scale_funcs["dof_pos/hand_thumb_1_Left"] = lambda: 1000 - 1000 * (
+            1 - np.exp(-5 * self.joy_axes.get(JoyAxesIndices.L_trigger, 0.0))
+        ) / (1 - np.exp(-5))
+        self.hands_scale_funcs["dof_pos/hand_thumb_1_Right"] = lambda: 1000 - 1000 * (
+            1 - np.exp(-5 * self.joy_axes.get(JoyAxesIndices.R_trigger, 0.0))
+        ) / (1 - np.exp(-5))
 
 
 def main(args=None) -> None:

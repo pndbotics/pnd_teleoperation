@@ -226,9 +226,9 @@ class AdamMinkProNode(AdamMinkBase):
                         ROOT_POSE_NUM + joint_idx
                     ]
             if finger_idx is not None:
-                self.joint_state_msg.position[
-                    ROOT_POSE_NUM + finger_idx
-                ] = self.convert_finger(joints_radian, lower_limit, upper_limit)
+                self.joint_state_msg.position[ROOT_POSE_NUM + finger_idx] = (
+                    self.convert_finger(joints_radian, lower_limit, upper_limit)
+                )
 
     def convert_finger(
         self, radian: float, lower_limit: float, upper_limit: float

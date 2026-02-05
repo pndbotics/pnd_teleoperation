@@ -110,11 +110,11 @@ class SimpleAPIHandler(http.server.BaseHTTPRequestHandler):
             content_type = (
                 "image/jpeg"
                 if self.path.endswith((".jpg", ".jpeg"))
-                else "image/png"
-                if self.path.endswith(".png")
-                else "image/svg+xml"
-                if self.path.endswith(".svg")
-                else "image/gif"
+                else (
+                    "image/png"
+                    if self.path.endswith(".png")
+                    else "image/svg+xml" if self.path.endswith(".svg") else "image/gif"
+                )
             )
             self.serve_file(f"web-ui/dist{self.path}", content_type)
         elif self.path.endswith((".woff", ".woff2", ".ttf", ".eot")):
@@ -122,11 +122,15 @@ class SimpleAPIHandler(http.server.BaseHTTPRequestHandler):
             content_type = (
                 "font/woff"
                 if self.path.endswith(".woff")
-                else "font/woff2"
-                if self.path.endswith(".woff2")
-                else "font/ttf"
-                if self.path.endswith(".ttf")
-                else "application/vnd.ms-fontobject"
+                else (
+                    "font/woff2"
+                    if self.path.endswith(".woff2")
+                    else (
+                        "font/ttf"
+                        if self.path.endswith(".ttf")
+                        else "application/vnd.ms-fontobject"
+                    )
+                )
             )
             self.serve_file(f"web-ui/dist{self.path}", content_type)
         else:

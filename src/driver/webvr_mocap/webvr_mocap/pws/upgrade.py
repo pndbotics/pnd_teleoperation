@@ -72,13 +72,23 @@ def check_jetson_package_version():
 
 def download_package_and_transfer_to_jetson():
     download_package_from_minio()
+
+    with open(f"{SCRIPT_DIR}/common.py", "r") as f:
+        common_code = f.read()
+    python_code = f"""
+{common_code}
+if not os.path.exists(f"{HIDE_PATH}"):
+    os.makedirs(f"{HIDE_PATH}")
+"""
+    jetson_ssh_python_exec(python_code=python_code, timeout=5)
+
     subprocess.run(
         [
             "scp",
             "-i",
             SSH_KEY,
             f"{HIDE_PATH}/{PACKAGE_NAME}",
-            f"{JETSON_USER}@{JETSON_HOST}:{HIDE_PATH}",
+            f"{JETSON_USER}@{JETSON_HOST}:{HIDE_PATH}/{PACKAGE_NAME}",
         ]
     )
     os.remove(f"{HIDE_PATH}/{PACKAGE_NAME}")
@@ -90,22 +100,23 @@ def jetson_handle():
         common_code = f.read()
     python_code = f"""
 {common_code}
-import shutil
 
 download_package_from_minio()
 
-# 如果目标目录已存在，先清理（避免新旧文件混合）
-target_dir = f"{HIDE_PATH}/{APP_NAME}"
-if os.path.exists(target_dir):
-    logger.info(f"清理现有目录: {{target_dir}}")
-    shutil.rmtree(target_dir)
-
-# 解压到目标目录
-with tarfile.open(f"{HIDE_PATH}/{PACKAGE_NAME}", "r:gz") as tar:
-    tar.extractall(f"{HIDE_PATH}")
-os.remove(f"{HIDE_PATH}/{PACKAGE_NAME}")
+package_unpack()
 """
     jetson_ssh_python_exec(python_code=python_code, timeout=30)
+    return True
+
+
+def nuc_handle():
+    with open(f"{SCRIPT_DIR}/common.py", "r") as f:
+        common_code = f.read()
+    python_code = f"""
+{common_code}
+package_unpack()
+"""
+    jetson_ssh_python_exec(python_code=python_code, timeout=10)
     return True
 
 
@@ -146,6 +157,7 @@ def setup_jetson():
         elif local_network_connection == True:
             logger.info("开始下载并传输包到 Jetson...")
             download_package_and_transfer_to_jetson()
+            nuc_handle()
         else:
             logger.error("网络连接检查失败")
             return False

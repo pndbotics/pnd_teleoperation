@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import subprocess
 import tarfile
 import threading
@@ -201,3 +202,16 @@ def download_package_from_minio():
     response = requests.get(url)
     with open(f"{HIDE_PATH}/{PACKAGE_NAME}", "wb") as f:
         f.write(response.content)
+
+
+def package_unpack():
+    # 如果目标目录已存在，先清理（避免新旧文件混合）
+    target_dir = f"{HIDE_PATH}/{APP_NAME}"
+    if os.path.exists(target_dir):
+        logger.info(f"清理现有目录: {{target_dir}}")
+        shutil.rmtree(target_dir)
+
+    # 解压到目标目录
+    with tarfile.open(f"{HIDE_PATH}/{PACKAGE_NAME}", "r:gz") as tar:
+        tar.extractall(f"{HIDE_PATH}")
+    os.remove(f"{HIDE_PATH}/{PACKAGE_NAME}")

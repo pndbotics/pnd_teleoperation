@@ -318,7 +318,9 @@ class VRWebSocketServer(BaseInputProvider):
                     },
                 )
                 await self.send_goal(reset_goal)
-                logger.info(f"🎯 {hand.upper()} auto-activated - controlling {hand} arm")
+                logger.info(
+                    f"🎯 {hand.upper()} auto-activated - controlling {hand} arm"
+                )
 
             # 计算目标位置 - 改为绝对位置控制
             position_array = np.array(

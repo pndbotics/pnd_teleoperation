@@ -101,7 +101,11 @@ async def check_jetson_package_setup():
             }
     except Exception as e:
         print(f"检测服务状态时出错: {e}")
-        return {"is_setup": False, "status": "failed", "message": f"检测服务状态失败: {str(e)}"}
+        return {
+            "is_setup": False,
+            "status": "failed",
+            "message": f"检测服务状态失败: {str(e)}",
+        }
 
 
 def update_setup_status(new_status):
