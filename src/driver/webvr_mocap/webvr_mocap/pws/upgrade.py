@@ -22,6 +22,7 @@ try:
         PACKAGE_NAME,
         PACKAGE_VERSION_NAME,
         SSH_KEY,
+        get_ssh_key,
         download_package_from_minio,
         jetson_ssh_exec,
         jetson_ssh_python_exec,
@@ -45,6 +46,7 @@ except ImportError:
         PACKAGE_NAME,
         PACKAGE_VERSION_NAME,
         SSH_KEY,
+        get_ssh_key,
         download_package_from_minio,
         jetson_ssh_exec,
         jetson_ssh_python_exec,
@@ -121,6 +123,13 @@ package_unpack()
 
 
 def setup_jetson():
+    if get_ssh_key() is None:
+        logger.warning(
+            "Jetson SSH 密钥未配置（未找到 ~/.ssh/jetson_ed25519），跳过 Jetson 升级；"
+            "仅使用本地 VR。如需连接 Jetson，请运行: pteleop setup ssh"
+        )
+        return False
+
     nuc_to_jetson = check_nuc_to_jetson_connection(host=JETSON_HOST)
     if not nuc_to_jetson:
         logger.error(f"NUC 无法连接 Jetson {JETSON_HOST}，请检查网络或 Jetson 是否在线")

@@ -11,8 +11,16 @@ logger = logging.getLogger(__name__)
 
 remote_service_process = None
 
-SSH_KEY = "/home/pnd-humanoid/.ssh/jetson_ed25519"
+SSH_KEY_PATH = os.path.expanduser("~/.ssh/jetson_ed25519")
+SSH_KEY = SSH_KEY_PATH  # 保留供外部引用路径；实际调用请用 get_ssh_key()
 JETSON_HOST = "10.10.20.126"
+
+
+def get_ssh_key():
+    """若密钥文件存在则返回路径，否则返回 None（未配置时跳过 Jetson 相关操作）。"""
+    if SSH_KEY_PATH and os.path.exists(SSH_KEY_PATH):
+        return SSH_KEY_PATH
+    return None
 JETSON_USER = "pnd-humanoid"
 NUC_USER = "pnd-humanoid"
 HIDE_PATH = "/home/pnd-humanoid/.pnd"
@@ -26,8 +34,10 @@ REMOTE_PACKAGE_VERSION_NAME = "version.txt"
 
 
 def jetson_ssh_python_exec(
-    host=JETSON_HOST, user=JETSON_USER, ssh_key=SSH_KEY, python_code=None, timeout=3
+    host=JETSON_HOST, user=JETSON_USER, ssh_key=None, python_code=None, timeout=3
 ):
+    if ssh_key is None:
+        ssh_key = get_ssh_key()
     ssh_cmd = ["ssh"]
     if ssh_key:
         ssh_cmd.extend(["-i", ssh_key])
@@ -58,8 +68,10 @@ def jetson_ssh_python_exec(
 
 
 def jetson_ssh_exec(
-    host=JETSON_HOST, user=JETSON_USER, ssh_key=SSH_KEY, command=None, timeout=3
+    host=JETSON_HOST, user=JETSON_USER, ssh_key=None, command=None, timeout=3
 ):
+    if ssh_key is None:
+        ssh_key = get_ssh_key()
     ssh_cmd = ["ssh"]
     if ssh_key:
         ssh_cmd.extend(["-i", ssh_key])
@@ -138,24 +150,26 @@ def stop_remote_service():
                 remote_service_process.kill()
 
         # 通过 SSH 发送 kill 命令，确保远程进程被停止
-        kill_cmd = "pkill -f 'pnd-webrtc-server' || true"
-        ssh_kill_cmd = [
-            "ssh",
-            "-i",
-            SSH_KEY,
-            "-o",
-            "StrictHostKeyChecking=no",
-            "-o",
-            "LogLevel=ERROR",
-            f"{JETSON_USER}@{JETSON_HOST}",
-            kill_cmd,
-        ]
-        subprocess.run(
-            ssh_kill_cmd,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            timeout=5,
-        )
+        key = get_ssh_key()
+        if key:
+            kill_cmd = "pkill -f 'pnd-webrtc-server' || true"
+            ssh_kill_cmd = [
+                "ssh",
+                "-i",
+                key,
+                "-o",
+                "StrictHostKeyChecking=no",
+                "-o",
+                "LogLevel=ERROR",
+                f"{JETSON_USER}@{JETSON_HOST}",
+                kill_cmd,
+            ]
+            subprocess.run(
+                ssh_kill_cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                timeout=5,
+            )
         logger.info("Jetson 服务已停止")
     except Exception as e:
         logger.warning(f"停止 Jetson 服务时出错: {e}")
@@ -166,10 +180,13 @@ def stop_remote_service():
 def start_synchronized_service(command):
     """启动远程服务"""
     global remote_service_process
+    key = get_ssh_key()
+    if not key:
+        raise RuntimeError("Jetson SSH 密钥未配置，无法启动远程服务")
     ssh_cmd = [
         "ssh",
         "-i",
-        SSH_KEY,
+        key,
         "-o",
         "StrictHostKeyChecking=no",
         "-o",

@@ -40,5 +40,4 @@ except:
     print('FAILED')
 """
     result = jetson_ssh_python_exec(python_code=python_code)
-    print(result)
-    return result["returncode"] == 0 and "SUCCESS" in result["stdout"]
+    return result.get("returncode") == 0 and "SUCCESS" in (result.get("stdout") or "")
