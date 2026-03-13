@@ -46,7 +46,7 @@ sudo ldconfig
 # Clone repo
 
 ```sh
-git clone https://github.com/pndbotics/pnd_teleoperation.git
+git lfs clone https://github.com/pndbotics/pnd_teleoperation.git
 cd pnd_teleoperation
 ```
 
@@ -75,12 +75,6 @@ spteleop
 spteleop teleop adam_u webvr mink
 spteleop teleop adam_pro noitom pinocchio
 spteleop launch pinocchio-adam_u-webvr # launch a bringup launch file
-```
-
-## preview
-
-```sh
-sudo ./preview.sh
 ```
 
 ## use docker
@@ -158,4 +152,9 @@ sudo su
 # example:
 ./run.sh adam_u vr mink
 ./run.sh adam_pro noitom pinocchio
+```
+
+preview:
+```sh
+sudo ./preview.sh
 ```
