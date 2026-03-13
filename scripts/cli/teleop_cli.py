@@ -7,6 +7,7 @@ import typer
 from .caddy import _start_caddy_background
 from .check_env import _check_ros_environment
 from .common import echo_error, echo_info, echo_launch_and_exit
+from .preview import _start_preview_background
 from .teleop_cmd import (
     _complete_adam,
     _complete_algorithm,
@@ -35,6 +36,11 @@ def teleop(
     _adam_opt: str | None = typer.Option(None, "--adam-type", "-a", hidden=True),
     _mocap_opt: str | None = typer.Option(None, "--mocap", "-m", hidden=True),
     _algo_opt: str | None = typer.Option(None, "--algorithm", "-g", hidden=True),
+    with_preview: bool = typer.Option(
+        True,
+        "--with-preview/--no-preview",
+        help="Whether to start Foxglove preview (foxglove_bridge) in background.",
+    ),
 ) -> None:
     """
     Start teleoperation (PND Retarget).
@@ -70,6 +76,9 @@ def teleop(
     echo_info(f"  Algorithm: {algorithm}")
     echo_info("Checking ROS environment...")
     _check_ros_environment()
+
+    if with_preview:
+        _start_preview_background()
 
     launch_cmd = _get_launch_command(adam_type, mocap_driver, algorithm)
     if (adam_type, mocap_driver, algorithm) == ("adam_u", "webvr", "mink"):
