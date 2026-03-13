@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="/favicon.ico">
+  <title>PND Teleoperation</title>
+  <meta name="description" content="PND Teleoperation">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="aframe.min.js"></script>
+  <script src="interface.js" defer></script>
+  <script type="module" crossorigin src="/assets/index-CIq5sdgl.js"></script>
+  <link rel="stylesheet" crossorigin href="/index.css">
+</head>
+
+<body>
+
+  <!-- Desktop Interface -->
+  <div class="desktop-interface" id="desktopInterface">
+    <div style="margin-bottom: 30px;">
+      <button id="connectVideoBtn" class="video-btn">连接</button>
+      <button id="startVideoBtn" class="video-btn">启动流</button>
+      <button id="toggleVideoBtn" class="video-btn" style="visibility: hidden;">显示视频</button>
+    </div>
+    <video class="desktop-video" id="desktop-video" autoplay loop="true" crossorigin="anonymous" muted playsinline webkit-playsinline style="display: none;"></video>
+  </div>
+
+  <!-- VR-only content -->
+  <div class="vr-content" id="vrContent">
+    <div class="vr-title">VR Teleoperation</div>
+  </div>
+
+  <!-- A-Frame VR Scene -->
+  <a-scene vr-mode-ui="enabled: true;">
+    <a-assets>
+      <video id="robot-video" autoplay loop="true" crossorigin="anonymous" muted playsinline webkit-playsinline></video>
+    </a-assets>
+
+    <!-- Using the asset management system. -->
+    <!-- <a-video id="robot-a-video" src="#robot-video" width="16" height="9" position="0 5 -20" visible="false"></a-video> -->
+    <!-- Headset tracking entity -->
+    <a-entity movement-controls>
+      <a-entity id="headset" camera look-controls position="0 1.6 0">
+        <a-video id="robot-a-video" src="#robot-video" width="4" height="2.25" position="0 0 -4"
+          visible="false"></a-video>
+
+        <a-text id="headsetInfo" value="Headset: ..." position="0 0.15 -0.5" rotation="0 0 0" scale="0.05 0.05 0.05"
+          color="yellow" align="center" font="font/Roboto-msdf.json"></a-text>
+      </a-entity>
+    </a-entity>
+
+    <!-- Passthrough setup -->
+    <a-entity webxr-passthrough="referenceSpaceType: local-floor"></a-entity>
+
+    <!-- Headset tracking entity -->
+    <!-- <a-entity id="headset" camera>
+      <a-text id="headsetInfo" value="Headset: ..." position="0 -0.2 -0.5" rotation="0 0 0" scale="0.05 0.05 0.05"
+        color="yellow" align="center"></a-text>
+    </a-entity> -->
+
+    <!-- Controllers -->
+    <a-entity id="leftHand" oculus-touch-controls="hand: left">
+      <a-text id="leftHandInfo" value="Pos: ...\nRot: ..." position="0 0.04 -0.05" rotation="0 0 0"
+        scale="0.05 0.05 0.05" color="white" align="center" font="font/Roboto-msdf.json"></a-text>
+    </a-entity>
+    <a-entity id="rightHand" oculus-touch-controls="hand: right">
+      <a-text id="rightHandInfo" value="Pos: ...\nRot: ..." position="0 0.04 -0.05" rotation="0 0 0"
+        scale="0.05 0.05 0.05" color="white" align="center" font="font/Roboto-msdf.json"></a-text>
+    </a-entity>
+  </a-scene>
+
+  <script>
+  </script>
+</body>
+
+</html>

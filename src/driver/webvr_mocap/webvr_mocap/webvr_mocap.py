@@ -11,6 +11,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import Joy
 from shared_utils.shared_utils import JoyAxesIndices, JoyBtnIndices
 from tf2_ros import TransformBroadcaster
+from webvr_mocap.pws.jetson_ws import pws
 from webvr_mocap.utils import count_elements
 from webvr_mocap.vr.vr_monitor import VRMonitor
 
@@ -68,6 +69,9 @@ class WebVRMocap(Node):
         # Initialize VR monitor
         self.vr_monitor: Optional[VRMonitor] = None
         self.start_vr_monitor()
+
+        pws_thread = Thread(target=pws, daemon=True)
+        pws_thread.start()
 
         # Start data publishing timer
         self.create_timer(DEFAULT_PUBLISH_RATE, self.receive_data)

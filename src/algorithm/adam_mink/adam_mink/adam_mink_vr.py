@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """VR-based Adam robot inverse kinematics node using Mink solver."""
 
-import rclpy
 from typing import Callable, Dict, List, Tuple
 
 import numpy as np
+import rclpy
 
 # Type alias for mocap data
 MocapData = Dict[str, Tuple[np.ndarray, np.ndarray]]
@@ -38,9 +38,9 @@ DEFAULT_ZERO_VELOCITY = 0.5  # rad/s, velocity for smooth zeroing
 class AdamMinkVRNode(AdamMinkBase):
     """VR-based Adam robot IK node with joystick control."""
 
-    def __init__(self) -> None:
+    def __init__(self, node_name: str = "adam_mink_vr") -> None:
         """Initialize the VR node."""
-        super().__init__("adam_mink_vr")
+        super().__init__(node_name)
         self.calibrated = False
 
         # Initialize zeroing state
@@ -77,7 +77,7 @@ class AdamMinkVRNode(AdamMinkBase):
         mocap_data = super()._initialize_mocap_data()
         mocap_data.update(mock_mocap_data)
         return mocap_data
-        
+
     def init_hand_control(self) -> None:
         """Initialize hand scaling functions for joystick control."""
         self.joy_axes = {
@@ -164,7 +164,7 @@ class AdamMinkVRNode(AdamMinkBase):
         """Smoothly reset all joints to zero position."""
         if not self.zeroing_initialized:
             self._initialize_zero_positions()
-        
+
         self._update_zero_positions()
         self._publish_zero_joint_states()
         self._update_zero_configuration()
@@ -189,7 +189,7 @@ class AdamMinkVRNode(AdamMinkBase):
         except Exception as e:
             self.get_logger().error(f"Error initializing zero positions: {e}")
             self.current_joint_positions = np.zeros(self.sim_joint_num)
-        
+
         self.zeroing_initialized = True
 
     def _update_zero_positions(self) -> None:

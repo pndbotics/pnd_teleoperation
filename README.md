@@ -13,6 +13,7 @@
 - ubuntu 22
 - ros2 humble
 - casadi
+- uv
 
 ## dependencies
 
@@ -49,6 +50,13 @@ git clone https://github.com/pndbotics/pnd_teleoperation.git
 cd pnd_teleoperation
 ```
 
+## install uv
+
+```sh
+pip install uv --user
+uv sync
+```
+
 ## build
 
 ```sh
@@ -57,29 +65,22 @@ cd pnd_teleoperation
 
 ## run
 
+spteleop cli: new version command line tool, supports auto-completion and tab-completable(old version command line tool has been deprecated and will be removed in several versions)
+
 ```sh
-sudo su
-./run.sh [adam_type] [mocap_driver] [algorithm] # adam_type: adam_sp/adam_u/adam_pro; mocap_driver: noitom/vr; algorithm: pinocchio/mink;
+source setup_cli.bash
+spteleop teleop [adam_type] [mocap_driver] [algorithm]
 # example:
-./run.sh adam_u vr mink
-./run.sh adam_pro noitom pinocchio
+spteleop
+spteleop teleop adam_u webvr mink
+spteleop teleop adam_pro noitom pinocchio
+spteleop launch pinocchio-adam_u-webvr # launch a bringup launch file
 ```
 
 ## preview
 
 ```sh
-sudo su
-./preview.sh
-```
-
-## Options
-
-### webvr
-
-```sh
-pip install uv --user
-uv sync
-source .venv/bin/activate
+sudo ./preview.sh
 ```
 
 ## use docker
@@ -132,4 +133,29 @@ ros2 bag record <topic_name>
 
 ```sh
 ros2 run tests_bag play_bag --ros-args -p bag_path:=rosbag2_2025_03_28-09_04_32/
+```
+
+## FAQ
+
+### uv sync slow
+
+```sh
+echo 'export UV_DEFAULT_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"'>> ~/.bashrc
+# echo 'export UV_DEFAULT_INDEX="https://mirrors.aliyun.com/pypi/simple/"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+## Credits
+
+- [telegrip](https://github.com/DipFlip/telegrip)
+- [XLeRobot](https://github.com/Vector-Wangel/XLeRobot)
+
+## Old startup script
+
+```sh
+sudo su
+./run.sh [adam_type] [mocap_driver] [algorithm] # adam_type: adam_sp/adam_u/adam_pro; mocap_driver: noitom/vr; algorithm: pinocchio/mink;
+# example:
+./run.sh adam_u vr mink
+./run.sh adam_pro noitom pinocchio
 ```

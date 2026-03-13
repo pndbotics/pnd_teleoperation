@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Base class for Adam robot inverse kinematics using Mink solver."""
 
+import array
+import time
 from abc import ABC, abstractmethod
 from threading import Lock, Thread
 from typing import Dict, List, Tuple, Union
@@ -9,34 +11,34 @@ import mink
 import mujoco as mj
 import mujoco.viewer as mjv
 import numpy as np
-
-# Type aliases for better readability
-MocapData = Dict[str, Tuple[np.ndarray, np.ndarray]]  # bone_name -> (position, rotation)
 import rclpy
 import tf2_ros
 import yaml
-import array
-from adam_mink.utils import draw_frame, quat_mul_single, quat_rotate_vector
 from adam_mink.constants import (
     ALL_FINGER,
-    DEFAULT_TIMER_PERIOD,
-    DEFAULT_JOINT_STATE_QUEUE_SIZE,
-    DEFAULT_MUJOCO_VIEWER_FREQUENCY,
-    DEFAULT_IK_SOLVER,
-    DEFAULT_IK_DAMPING,
-    DEFAULT_IK_ITER_MAX,
-    DEFAULT_IK_ERROR_THRESHOLD,
-    DEFAULT_IK_ITER_WARN_THRESHOLD,
     DEFAULT_FINGER_POSITION,
     DEFAULT_FRAME_SIZE,
+    DEFAULT_IK_DAMPING,
+    DEFAULT_IK_ERROR_THRESHOLD,
+    DEFAULT_IK_ITER_MAX,
+    DEFAULT_IK_ITER_WARN_THRESHOLD,
+    DEFAULT_IK_SOLVER,
+    DEFAULT_JOINT_STATE_QUEUE_SIZE,
+    DEFAULT_MUJOCO_VIEWER_FREQUENCY,
+    DEFAULT_TIMER_PERIOD,
     ROOT_POSE_NUM,
 )
+from adam_mink.utils import draw_frame, quat_mul_single, quat_rotate_vector
 from loop_rate_limiters import RateLimiter
 from pydantic import BaseModel
 from rclpy.node import Node
 from scipy.spatial.transform import Rotation as R
 from sensor_msgs.msg import JointState
-import time
+
+# Type aliases for better readability
+MocapData = Dict[
+    str, Tuple[np.ndarray, np.ndarray]
+]  # bone_name -> (position, rotation)
 
 
 class IkConfig(BaseModel):
@@ -78,36 +80,28 @@ class AdamMinkBase(Node, ABC):
             node_name: Name of the ROS2 node.
         """
         super().__init__(node_name)
-        
-        # Load and validate parameters
+
         adam_model_path, adam_mink_cfg_path, mujoco_sim = self._load_parameters()
-        
-        # Initialize ROS2 components
+
         self._initialize_ros_components()
-        
-        # Get bone frames from subclass (bones to track from TF)
+
         self.bone_frames = self.get_bone_frames()
-        
-        # Load MuJoCo model
+
         self._load_model(adam_model_path)
-        
-        # Load and validate configuration
+
         self._load_config(adam_mink_cfg_path)
-        
-        # Initialize joint and motor mappings
+
         self._initialize_joint_mappings()
-        
-        # Initialize IK solver
+
         self._initialize_ik_solver()
-        
-        # Start background threads
+
         self._start_background_threads(mujoco_sim)
-        
+
         self.get_logger().info(f"{node_name} node started")
 
     def _load_parameters(self) -> Tuple[str, str, bool]:
         """Load and validate ROS2 parameters.
-        
+
         Returns:
             Tuple of (adam_model_path, adam_mink_cfg_path, mujoco_sim).
         """
@@ -119,7 +113,7 @@ class AdamMinkBase(Node, ABC):
         self.declare_parameter("ik_damping", DEFAULT_IK_DAMPING)
         self.declare_parameter("ik_error_threshold", DEFAULT_IK_ERROR_THRESHOLD)
         self.declare_parameter("ik_solver", DEFAULT_IK_SOLVER)
-        
+
         # Get parameter values
         adam_mink_cfg_path = self.get_parameter("adam_mink_cfg").value
         adam_model_path = self.get_parameter("adam_model_path").value
@@ -138,7 +132,7 @@ class AdamMinkBase(Node, ABC):
             raise ValueError(
                 "Required parameter 'adam_mink_cfg' is not set or is empty"
             )
-        
+
         # Validate parameter ranges
         if self.ik_iter_max <= 0:
             raise ValueError("ik_iter_max must be positive")
@@ -149,7 +143,7 @@ class AdamMinkBase(Node, ABC):
 
         self.get_logger().info(f"adam_mink_cfg_path: {adam_mink_cfg_path}")
         self.get_logger().info(f"adam_model_path: {adam_model_path}")
-        
+
         return adam_model_path, adam_mink_cfg_path, mujoco_sim
 
     def _initialize_ros_components(self) -> None:
@@ -166,7 +160,7 @@ class AdamMinkBase(Node, ABC):
 
     def _load_model(self, adam_model_path: str) -> None:
         """Load MuJoCo model from file.
-        
+
         Args:
             adam_model_path: Path to the MuJoCo XML model file.
         """
@@ -177,13 +171,13 @@ class AdamMinkBase(Node, ABC):
                 f"Failed to load MuJoCo model from {adam_model_path}: {e}"
             )
             raise
-        
+
         # Initialize configuration
         self.configuration = mink.Configuration(self.model)
 
     def _load_config(self, adam_mink_cfg_path: str) -> None:
         """Load and validate configuration file.
-        
+
         Args:
             adam_mink_cfg_path: Path to the YAML configuration file.
         """
@@ -192,46 +186,50 @@ class AdamMinkBase(Node, ABC):
             with open(adam_mink_cfg_path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
             if data is None:
-                raise ValueError(f"Config file {adam_mink_cfg_path} is empty or invalid")
+                raise ValueError(
+                    f"Config file {adam_mink_cfg_path} is empty or invalid"
+                )
         except FileNotFoundError:
             self.get_logger().fatal(f"Config file not found: {adam_mink_cfg_path}")
             raise
         except yaml.YAMLError as e:
             self.get_logger().fatal(f"Failed to parse YAML config: {e}")
             raise
-        
+
         # Validate config structure
         try:
             self.adam_mink_cfg = AdamMinkConfig.model_validate(data)
         except Exception as e:
             self.get_logger().fatal(f"Failed to validate config: {e}")
             raise
-        
+
         # Validate config completeness
         if not self.adam_mink_cfg.ik_cfg:
             raise ValueError("IK configuration is empty")
-        
+
         # Create bone_name -> cfg mapping to avoid nested loop
         self.bone_name_to_cfg = {
             cfg.bone_name: cfg for cfg in self.adam_mink_cfg.ik_cfg
         }
-        
+
         self._rot_offset_quats = {}
         self._pos_offsets = {}
         for cfg in self.adam_mink_cfg.ik_cfg:
             if cfg.rot_offset:
-                self._rot_offset_quats[cfg.bone_name] = np.array(cfg.rot_offset, dtype=np.float64)
+                self._rot_offset_quats[cfg.bone_name] = np.array(
+                    cfg.rot_offset, dtype=np.float64
+                )
             if cfg.pos_offset:
-                self._pos_offsets[cfg.bone_name] = np.array(cfg.pos_offset, dtype=np.float64)
+                self._pos_offsets[cfg.bone_name] = np.array(
+                    cfg.pos_offset, dtype=np.float64
+                )
 
         # Warn about missing bone frames in config
         for bone in self.bone_frames:
             if not any(cfg.bone_name == bone for cfg in self.adam_mink_cfg.ik_cfg):
-                self.get_logger().warning(
-                    f"Bone frame '{bone}' not found in IK config"
-                )
-        
-        self.get_logger().info(f"Loaded config: {self.adam_mink_cfg}")
+                self.get_logger().warning(f"Bone frame '{bone}' not found in IK config")
+
+        self.get_logger().debug(f"Loaded config: {self.adam_mink_cfg}")
 
         # Initialize mocap_data with all bones from config (not just tracked ones)
         self.mocap_data = self._initialize_mocap_data()
@@ -244,7 +242,7 @@ class AdamMinkBase(Node, ABC):
         for i in range(self.model.nu):  # 'nu' is the number of actuators (motors)
             motor_name = mj.mj_id2name(self.model, mj.mjtObj.mjOBJ_ACTUATOR, i)
             self.robot_motor_names[f"dof_pos/{motor_name}"] = i
-            self.get_logger().info(f"Actuator {i}: {motor_name}")
+            self.get_logger().debug(f"Actuator {i}: {motor_name}")
 
         self.finger_joint_num = len(ALL_FINGER)
         self.all_joint = {
@@ -271,7 +269,7 @@ class AdamMinkBase(Node, ABC):
 
     def _start_background_threads(self, mujoco_sim: bool) -> None:
         """Start background threads for IK solving and visualization.
-        
+
         Args:
             mujoco_sim: Whether to start MuJoCo viewer thread.
         """
@@ -290,7 +288,7 @@ class AdamMinkBase(Node, ABC):
             if not self.calibrated:
                 time.sleep(DEFAULT_TIMER_PERIOD)
                 continue
-            
+
             start_time = time.time()
             with self._data_lock:
                 mocap_data_copy = self.mocap_data.copy()
@@ -298,30 +296,39 @@ class AdamMinkBase(Node, ABC):
                 self.scale_mocap_data(mocap_data_copy)
             scale_time = time.time()
             if scale_time - start_time > 0.001:
-                self.get_logger().warning(f"Scale mocap data took {scale_time - start_time} seconds")
+                self.get_logger().warning(
+                    f"Scale mocap data took {scale_time - start_time} seconds"
+                )
             self.offset_mocap_data(mocap_data_copy)
             offset_time = time.time()
             if offset_time - scale_time > 0.001:
-                self.get_logger().warning(f"Offset mocap data took {offset_time - scale_time} seconds")
+                self.get_logger().warning(
+                    f"Offset mocap data took {offset_time - scale_time} seconds"
+                )
             self.mocap_data_adjusted = mocap_data_copy
             self._update_ik_targets()
             update_ik_targets_time = time.time()
             if update_ik_targets_time - offset_time > 0.001:
-                self.get_logger().warning(f"Update IK targets took {update_ik_targets_time - offset_time} seconds")
+                self.get_logger().warning(
+                    f"Update IK targets took {update_ik_targets_time - offset_time} seconds"
+                )
             self._solve_ik()
             solve_ik_time = time.time()
             if solve_ik_time - update_ik_targets_time > 0.02:
-                self.get_logger().warning(f"Solve IK took {solve_ik_time - update_ik_targets_time} seconds")
+                self.get_logger().warning(
+                    f"Solve IK took {solve_ik_time - update_ik_targets_time} seconds"
+                )
             self._publish_joint_states()
             publish_joint_states_time = time.time()
             if publish_joint_states_time - solve_ik_time > 0.001:
-                self.get_logger().warning(f"Publish joint states took {publish_joint_states_time - solve_ik_time} seconds")
+                self.get_logger().warning(
+                    f"Publish joint states took {publish_joint_states_time - solve_ik_time} seconds"
+                )
             end_time = time.time()
             # if end_time - start_time > 0.025:
             #     self.get_logger().warning(f"IK thread loop took {end_time - start_time} seconds, which is longer than 25ms")
-            
-        self.get_logger().info("IK thread loop ended")
 
+        self.get_logger().info("IK thread loop ended")
 
     @abstractmethod
     def get_bone_frames(self) -> list[str]:
@@ -334,7 +341,7 @@ class AdamMinkBase(Node, ABC):
 
     def _initialize_mocap_data(self) -> MocapData:
         """Initialize mocap data dictionary with all bones from config.
-        
+
         Returns:
             Dictionary mapping bone names to (position, rotation) tuples.
         """
@@ -398,7 +405,7 @@ class AdamMinkBase(Node, ABC):
         """Callback for TF transform timer. Check TF transforms and update mocap data."""
         if not self._update_mocap_data():
             return
-        
+
     def _update_mocap_data(self) -> bool:
         """Update mocap data from TF transforms."""
         mocap_data_update = {}
@@ -479,7 +486,9 @@ class AdamMinkBase(Node, ABC):
     def _publish_joint_states(self) -> None:
         """Publish joint states to ROS topic."""
         self.joint_state_msg.header.stamp = self.get_clock().now().to_msg()
-        self.joint_state_msg.position[:self._qpos_size] = array.array('d', self.configuration.data.qpos.tolist())
+        self.joint_state_msg.position[: self._qpos_size] = array.array(
+            "d", self.configuration.data.qpos.tolist()
+        )
         self.update_joint_states()
         self.joint_state_pub.publish(self.joint_state_msg)
 
@@ -489,7 +498,7 @@ class AdamMinkBase(Node, ABC):
 
     def scale_mocap_data(self, data: MocapData) -> None:
         """Scale mocap data based on human scale table.
-        
+
         Args:
             data: Mocap data dictionary to scale in-place.
         """
@@ -523,31 +532,31 @@ class AdamMinkBase(Node, ABC):
 
     def offset_mocap_data(self, data: MocapData) -> None:
         """Apply position and rotation offsets to mocap data.
-        
+
         Args:
             data: Mocap data dictionary to apply offsets to in-place.
         """
         bone_name_to_cfg = self.bone_name_to_cfg
         rot_offset_quats = self._rot_offset_quats
         pos_offsets = self._pos_offsets
-        
+
         for mocap_data_name, (pos, rot) in data.items():
             if mocap_data_name in bone_name_to_cfg:
                 rot_b = rot_offset_quats.get(mocap_data_name)
                 pos_offset = pos_offsets.get(mocap_data_name)
-                
+
                 if rot_b is None and pos_offset is None:
                     continue
-                
+
                 if rot_b is not None:
                     rot_combined = quat_mul_single(rot, rot_b)
                 else:
                     rot_combined = rot
-                
+
                 if pos_offset is not None:
                     global_pos_offset = quat_rotate_vector(rot_combined, pos_offset)
                     pos = pos + global_pos_offset
-                
+
                 data[mocap_data_name] = (pos, rot_combined)
 
     def mujoco_t(self) -> None:
@@ -582,6 +591,4 @@ class AdamMinkBase(Node, ABC):
                         )
                         rate.sleep()
         except Exception as e:
-            self.get_logger().error(
-                f"Mujoco viewer thread failed: {e}", exc_info=True
-            )
+            self.get_logger().error(f"Mujoco viewer thread failed: {e}", exc_info=True)

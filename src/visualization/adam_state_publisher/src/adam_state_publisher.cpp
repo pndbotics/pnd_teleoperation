@@ -198,7 +198,7 @@ namespace adam_state_publisher
     KDL::SegmentMap segments_map = tree.getSegments();
     for (const std::pair<const std::string, KDL::TreeElement> &segment : segments_map)
     {
-      RCLCPP_INFO(get_logger(), "got segment %s", segment.first.c_str());
+      RCLCPP_DEBUG(get_logger(), "got segment %s", segment.first.c_str());
     }
 
     // walk the tree and add segments to segments_

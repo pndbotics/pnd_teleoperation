@@ -62,7 +62,7 @@ def generate_launch_description():
 
     ld.add_action(robot_state_publisher_node)
     ld.add_action(adam_mink_node)
-    
+
     bringup_pkg_share = FindPackageShare(package="bringup").find("bringup")
     rviz_config_file = "rviz/robot.rviz"
     rviz_config_file_path = os.path.join(bringup_pkg_share, rviz_config_file)
