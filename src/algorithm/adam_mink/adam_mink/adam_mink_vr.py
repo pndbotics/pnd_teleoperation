@@ -69,7 +69,7 @@ class AdamMinkVRNode(AdamMinkBase):
 
     def _initialize_mocap_data(self) -> MocapData:
         mock_mocap_data = {
-            "root": (np.array([0.0, 0.0, 0.0]), np.array([1.0, 0.0, 0.0, 0.0])),
+            "root": (np.array([0.0, 0.0, 1.0]), np.array([1.0, 0.0, 0.0, 0.0])),
             "Spine2": (np.array([0.0, 0.0, 0.0]), np.array([1.0, 0.0, 0.0, 0.0])),
             "LeftArm": (np.array([0.0, 0.3, 0.0]), np.array([1.0, 0.1, 0.0, 0.0])),
             "RightArm": (np.array([0.0, -0.3, 0.0]), np.array([1.0, -0.1, 0.0, 0.0])),
@@ -144,10 +144,6 @@ class AdamMinkVRNode(AdamMinkBase):
             else:
                 self.get_logger().warn(f"Motor name {name} not found in all_joint")
 
-        # Temporarily fix the adam_pro crouching issue when using adam_u webvr to operate adam_pro
-        # update root position z to 1
-        self.joint_state_msg.position[2] = 1.0
-
     def joy_callback(self, msg: Joy) -> None:
         """Handle joystick input messages."""
         if msg.buttons[JoyBtnIndices.R_A] == 1 and not self.calibrated:
@@ -220,7 +216,7 @@ class AdamMinkVRNode(AdamMinkBase):
         """Publish joint states with zero positions."""
         self.joint_state_msg.header.stamp = self.get_clock().now().to_msg()
         self.joint_state_msg.position = (
-            list([0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0])
+            list([0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0])
             + list(self.current_joint_positions)
             + [DEFAULT_FINGER_POSITION] * self.finger_joint_num
         )
