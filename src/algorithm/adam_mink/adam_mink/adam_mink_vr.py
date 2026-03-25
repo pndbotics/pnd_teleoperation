@@ -144,6 +144,10 @@ class AdamMinkVRNode(AdamMinkBase):
             else:
                 self.get_logger().warn(f"Motor name {name} not found in all_joint")
 
+        # Temporarily fix the adam_pro crouching issue when using adam_u webvr to operate adam_pro
+        # update root position z to 1
+        self.joint_state_msg.position[2] = 1.0
+
     def joy_callback(self, msg: Joy) -> None:
         """Handle joystick input messages."""
         if msg.buttons[JoyBtnIndices.R_A] == 1 and not self.calibrated:
