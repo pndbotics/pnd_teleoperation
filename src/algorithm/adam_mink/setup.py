@@ -42,6 +42,7 @@ setup(
             "adam_mink_vr_sg_fixneck = adam_mink.adam_mink_vr_sg_fixneck:main",
             "adam_mink_pro = adam_mink.adam_mink_pro:main",
             "adam_mink_vivetracker3 = adam_mink.adam_mink_vivetracker3:main",
+            "adam_mink_picotracker3 = adam_mink.adam_mink_picotracker3:main",
         ],
     },
 )
