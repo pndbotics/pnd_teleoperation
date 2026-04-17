@@ -44,7 +44,7 @@ class TransformOffset:
 
 
 EXPECTED_BONES: list[str] = [
-    "Waist",
+    "Pelvis",
     "HMD",
     "LeftElbow",
     "LeftController",
@@ -76,7 +76,7 @@ class PicoMocap(Node):
         self.calibrated_pub = self.create_publisher(Bool, "pico_mocap/calibrated", qos)
         self.transform_offsets = {name: TransformOffset() for name in EXPECTED_BONES}
         self.zero_offset = {
-            "Waist": 1.0 + 0.25,
+            "Pelvis": 1.0 + 0.25,
             "HMD": 1.0 + 0.7 - 0.2,
             "LeftElbow": 1.0 + 0.4,
             "LeftController": 1.0 + -0.05,
@@ -146,7 +146,7 @@ class PicoMocap(Node):
 
     def _apply_calibration_transform(self, name: str) -> None:
         tracker_by_frame = {
-            "Waist": self.T_tracker_chest,
+            "Pelvis": self.T_tracker_chest,
             "RightElbow": self.T_tracker_upperR,
             "LeftElbow": self.T_tracker_upperL,
         }
@@ -160,7 +160,7 @@ class PicoMocap(Node):
         t_out, q_out = matrix_to_pose(transform_out)
         self._set_frame_pose(name, list(t_out), q_out)
 
-    def _apply_root_relative_scaling(self, names: list[str], root_name: str = "Waist") -> None:
+    def _apply_root_relative_scaling(self, names: list[str], root_name: str = "Pelvis") -> None:
         """Scale joint positions around a fixed root, preserving pose structure."""
         root_frame = self._frames.get(root_name)
         if root_frame is None:
@@ -207,17 +207,8 @@ class PicoMocap(Node):
 
         frame = self._frames[name]
 
-        x, y, z = (
-            float(position["x"]),
-            float(position["y"]),
-            float(position["z"]),
-        )
-        qx, qy, qz, qw = (
-            float(orientation["x"]),
-            float(orientation["y"]),
-            float(orientation["z"]),
-            float(orientation["w"]),
-        )
+        x, y, z = [float(i) for i in position.split(",")]
+        qx, qy, qz, qw = [float(i) for i in orientation.split(",")]
 
         # Position: map Unity VR -> robot frame using a fixed 3x3 transform.
         rx, ry, rz = _mat_vec_mul(self._unity_to_robot, [x, y, z])
@@ -248,7 +239,7 @@ class PicoMocap(Node):
 
     def receive_loop(self) -> None:
         while rclpy.ok():
-            data, addr = self.sock.recvfrom(1024 * 2)
+            data, addr = self.sock.recvfrom(1024 * 4)
             time_stamp = self.get_clock().now()
             try:
                 payload = json.loads(data.decode())
@@ -257,19 +248,37 @@ class PicoMocap(Node):
                 self.get_logger().warn(f"Failed to decode JSON from {addr}: {exc}")
                 continue
 
-            # self._process_payload(payload, time_stamp)
+            self._process_payload(payload, time_stamp)
 
     def _process_payload(self, payload: dict, time_stamp) -> None:
         """Common processing for a single PICO payload dict."""
-        trackers = payload.get("trackers", [])
+        trackers = payload.get("Motion", {}).get("joints", [])
         updated_names: list[str] = []
         for tracker in trackers:
+            if tracker["bone"] is None:
+                continue
             is_tracked = tracker.get("isTracked", False)
-            if not is_tracked and tracker["name"] != "HMD":
-                self.get_logger().warn(f"Tracker {tracker['name']} is not tracked")
-            self._update_frame(tracker["name"], tracker["pos"], tracker["rot"])
-            updated_names.append(tracker["name"])
-            self._frames[tracker["name"]].header.stamp = time_stamp.to_msg()
+            if not is_tracked:
+                self.get_logger().warn(f"Tracker {tracker['bone']} is not tracked")
+            self._update_frame(tracker["bone"], tracker["pos"], tracker["rot"])
+            updated_names.append(tracker["bone"])
+            self._frames[tracker["bone"]].header.stamp = time_stamp.to_msg()
+            
+        head_pos = payload.get("Head", {}).get("pos", [0.0, 0.0, 0.0])
+        head_rot = payload.get("Head", {}).get("rot", [0.0, 0.0, 0.0, 1.0])
+        self._update_frame("HMD", head_pos, head_rot)
+        updated_names.append("HMD")
+        self._frames["HMD"].header.stamp = time_stamp.to_msg()
+        left_controller_pos = payload.get("Controller", {}).get("left", {}).get("pos", [0.0, 0.0, 0.0])
+        left_controller_rot = payload.get("Controller", {}).get("left", {}).get("rot", [0.0, 0.0, 0.0, 1.0])
+        self._update_frame("LeftController", left_controller_pos, left_controller_rot)
+        updated_names.append("LeftController")
+        self._frames["LeftController"].header.stamp = time_stamp.to_msg()
+        right_controller_pos = payload.get("Controller", {}).get("right", {}).get("pos", [0.0, 0.0, 0.0])
+        right_controller_rot = payload.get("Controller", {}).get("right", {}).get("rot", [0.0, 0.0, 0.0, 1.0])
+        self._update_frame("RightController", right_controller_pos, right_controller_rot)
+        updated_names.append("RightController")
+        self._frames["RightController"].header.stamp = time_stamp.to_msg()
 
         self._handle_calibration(payload)
         self._apply_root_relative_scaling(updated_names)
@@ -298,7 +307,7 @@ class PicoMocap(Node):
         """Calibrate the VR system based on current controller positions."""
         _, q_left = self._get_frame_pose("LeftElbow")
         _, q_right = self._get_frame_pose("RightElbow")
-        _, q_chest = self._get_frame_pose("Waist")
+        _, q_chest = self._get_frame_pose("Pelvis")
         left = pose_to_matrix([0, 0, 0], q_left)
         right = pose_to_matrix([0, 0, 0], q_right)
         chest = pose_to_matrix([0, 0, 0], q_chest)
