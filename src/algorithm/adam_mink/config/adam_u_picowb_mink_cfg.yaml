@@ -1,0 +1,86 @@
+
+ik_cfg:
+  - adam_link_name: "lifting_Columns"
+    bone_name: "root"
+    position_cost: 1000.0
+    orientation_cost: 1000.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "torso"
+    bone_name: "spine-01"
+    position_cost: 0.0
+    orientation_cost: 30.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "shoulderYawLeft"
+    bone_name: "l-shoulder"
+    position_cost: 0.0
+    orientation_cost: 4.2
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.70710678, 0.70710678, 0.0, 0.0]
+  - adam_link_name: "shoulderYawRight"
+    bone_name: "r-shoulder"
+    position_cost: 0.0
+    orientation_cost: 4.2
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.70710678, -0.70710678, 0.0, 0.0]
+  - adam_link_name: "neckPitch"
+    bone_name: "neck"
+    position_cost: 0.0
+    orientation_cost: 20.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [1.0, 0.0, 0.0, 0.0]
+  - adam_link_name: "elbowLeft"
+    bone_name: "l-elbow"
+    position_cost: 0.0
+    orientation_cost: 5.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.70710678, 0.70710678, 0.0, 0.0]
+  - adam_link_name: "elbowRight"
+    bone_name: "r-elbow"
+    position_cost: 0.0
+    orientation_cost: 5.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.70710678, -0.70710678, 0.0, 0.0]
+  - adam_link_name: "wristRollLeft"
+    bone_name: "l-hand"
+    position_cost: 25.0
+    orientation_cost: 18.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.70710678, 0.70710678, 0.0, 0.0]
+  - adam_link_name: "wristRollRight"
+    bone_name: "r-hand"
+    position_cost: 25.0
+    orientation_cost: 18.0
+    pos_offset: [0.0, 0.0, 0.0]
+    rot_offset: [0.70710678, -0.70710678, 0.0, 0.0]
+
+collision_cfg:
+  - collision1: ["wristYawLeft", "wristYawRight", "shoulderYawLeft", "shoulderYawRight"]
+    collision2: ["torso"]
+    min_distance: 0.02
+    detection_distance: 0.03
+  - collision1: ["wristYawLeft"]
+    collision2: ["wristYawRight"]
+    min_distance: 0.02
+    detection_distance: 0.03
+
+velocity_limit:
+  "shoulderPitch_Left": 10
+  "shoulderPitch_Right": 10
+  "shoulderRoll_Left": 10
+  "shoulderRoll_Right": 10
+  # "shoulderYaw_Left": 10
+  # "shoulderYaw_Right": 10
+  "elbow_Left": 10
+  "elbow_Right": 10
+  # "wristYaw_Left": 9
+  # "wristYaw_Right": 9
+  # "wristPitch_Left": 9
+  # "wristPitch_Right": 9
+  # "wristRoll_Left": 9
+  # "wristRoll_Right": 9
+  "waistRoll": 8
+  "waistPitch": 8
+  "waistYaw": 8
+        

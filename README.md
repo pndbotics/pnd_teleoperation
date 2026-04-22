@@ -179,6 +179,16 @@ echo 'export UV_DEFAULT_INDEX="https://pypi.tuna.tsinghua.edu.cn/simple"'>> ~/.b
 source ~/.bashrc
 ```
 
+### Model download failed
+
+If you encounter issues loading models during runtime, check if they have been correctly downloaded. If the download fails due to network issues, try setting the environment variable:
+
+```sh
+export HF_ENDPOINT="https://hf-mirror.com"
+```
+
+After setting the environment variable, restart the teleoperation program to trigger model download.
+
 ## Credits
 
 - [telegrip](https://github.com/DipFlip/telegrip)

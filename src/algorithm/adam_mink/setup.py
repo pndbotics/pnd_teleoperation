@@ -43,6 +43,7 @@ setup(
             "adam_mink_pro = adam_mink.adam_mink_pro:main",
             "adam_mink_vivetracker3 = adam_mink.adam_mink_vivetracker3:main",
             "adam_mink_picotracker3 = adam_mink.adam_mink_picotracker3:main",
+            "adam_mink_picowb = adam_mink.adam_mink_picowb:main",
         ],
     },
 )
