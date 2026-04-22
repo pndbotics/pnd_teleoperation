@@ -3,8 +3,6 @@
 
 import numpy as np
 import rclpy
-from rclpy.qos import DurabilityPolicy, QoSProfile
-from std_msgs.msg import Bool
 
 from adam_mink.adam_mink_base import AdamMinkBase
 from adam_mink.constants import (

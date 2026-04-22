@@ -263,19 +263,27 @@ class PicoMocap(Node):
             self._update_frame(tracker["bone"], tracker["pos"], tracker["rot"])
             updated_names.append(tracker["bone"])
             self._frames[tracker["bone"]].header.stamp = time_stamp.to_msg()
-            
+
         head_pos = payload.get("Head", {}).get("pos", [0.0, 0.0, 0.0])
         head_rot = payload.get("Head", {}).get("rot", [0.0, 0.0, 0.0, 1.0])
         self._update_frame("HMD", head_pos, head_rot)
         updated_names.append("HMD")
         self._frames["HMD"].header.stamp = time_stamp.to_msg()
-        left_controller_pos = payload.get("Controller", {}).get("left", {}).get("pos", [0.0, 0.0, 0.0])
-        left_controller_rot = payload.get("Controller", {}).get("left", {}).get("rot", [0.0, 0.0, 0.0, 1.0])
+        left_controller_pos = (
+            payload.get("Controller", {}).get("left", {}).get("pos", [0.0, 0.0, 0.0])
+        )
+        left_controller_rot = (
+            payload.get("Controller", {}).get("left", {}).get("rot", [0.0, 0.0, 0.0, 1.0])
+        )
         self._update_frame("LeftController", left_controller_pos, left_controller_rot)
         updated_names.append("LeftController")
         self._frames["LeftController"].header.stamp = time_stamp.to_msg()
-        right_controller_pos = payload.get("Controller", {}).get("right", {}).get("pos", [0.0, 0.0, 0.0])
-        right_controller_rot = payload.get("Controller", {}).get("right", {}).get("rot", [0.0, 0.0, 0.0, 1.0])
+        right_controller_pos = (
+            payload.get("Controller", {}).get("right", {}).get("pos", [0.0, 0.0, 0.0])
+        )
+        right_controller_rot = (
+            payload.get("Controller", {}).get("right", {}).get("rot", [0.0, 0.0, 0.0, 1.0])
+        )
         self._update_frame("RightController", right_controller_pos, right_controller_rot)
         updated_names.append("RightController")
         self._frames["RightController"].header.stamp = time_stamp.to_msg()

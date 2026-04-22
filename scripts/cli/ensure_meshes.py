@@ -203,7 +203,7 @@ def ensure_meshes(
     for d in to_download:
         if not _download_variant(d, dest, revision=revision):
             all_ok = False
-            
+
     missing = _get_missing_meshes(adam_type, dest)
     if missing:
         echo_error(f"Failed to download meshs. {len(missing)} mesh files missing for {adam_type}.")

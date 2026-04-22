@@ -2,13 +2,12 @@ import json
 import socket
 import threading
 from dataclasses import dataclass, field
+from typing import ClassVar
 
 import numpy as np
 import rclpy
 from geometry_msgs.msg import TransformStamped
 from rclpy.node import Node
-from rclpy.qos import DurabilityPolicy, QoSProfile
-from std_msgs.msg import Bool
 from tf2_ros import TransformBroadcaster
 
 from pico_mocap.utils import (
@@ -16,9 +15,6 @@ from pico_mocap.utils import (
     _mat_vec_mul,
     _matrix_to_quat,
     _quat_to_matrix,
-    invert,
-    matrix_to_pose,
-    pose_to_matrix,
 )
 
 
@@ -44,7 +40,33 @@ class TransformOffset:
 
 
 class PicoMocap(Node):
-    BODY_NAMES = ["pelvis", "l-hip", "r-hip", "spine-01", "l-knee", "r-knee", "spine-02", "l-ankle", "r-ankle", "spine-03", "l-foot", "r-foot", "neck", "l-collar", "r-collar", "head", "l-shoulder", "r-shoulder", "l-elbow", "r-elbow", "l-wrist", "r-wrist", "l-hand", "r-hand"]
+    BODY_NAMES: ClassVar[tuple[str, ...]] = (
+        "pelvis",
+        "l-hip",
+        "r-hip",
+        "spine-01",
+        "l-knee",
+        "r-knee",
+        "spine-02",
+        "l-ankle",
+        "r-ankle",
+        "spine-03",
+        "l-foot",
+        "r-foot",
+        "neck",
+        "l-collar",
+        "r-collar",
+        "head",
+        "l-shoulder",
+        "r-shoulder",
+        "l-elbow",
+        "r-elbow",
+        "l-wrist",
+        "r-wrist",
+        "l-hand",
+        "r-hand",
+    )
+
     def __init__(self) -> None:
         super().__init__("pico_mocap")
 
@@ -63,7 +85,7 @@ class PicoMocap(Node):
             self._frames[name] = stamped
 
         self._tf_broadcaster = TransformBroadcaster(self)
-        
+
         # PICO uses Unity-style coordinates (same as Vive/SteamVR):
         # Unity: x right, y up, z forward
         # Robot: x forward, y left, z up
@@ -188,7 +210,6 @@ class PicoMocap(Node):
         frame.transform.rotation.z = rqz
         frame.transform.rotation.w = rqw
 
-
     def receive_loop(self) -> None:
         while rclpy.ok():
             # UDP max payload is 65507 bytes; Pico whole-body JSON can exceed 4KB.
@@ -212,9 +233,10 @@ class PicoMocap(Node):
             self._update_frame(bone["bone"], bone["pos"], bone["rot"])
             updated_names.append(bone["bone"])
             self._frames[bone["bone"]].header.stamp = time_stamp.to_msg()
-            
+
         self._apply_root_relative_scaling(updated_names)
         self._tf_broadcaster.sendTransform(list(self._frames.values()))
+
 
 def main(args=None) -> None:
     rclpy.init(args=args)

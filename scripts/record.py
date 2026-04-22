@@ -20,9 +20,11 @@ Examples:
   scripts/record.py -p 12070 -o sess01.udpcap
   scripts/record.py -p 12070 -b 0.0.0.0
 """
+
 from __future__ import annotations
 
 import argparse
+import contextlib
 import signal
 import socket
 import struct
@@ -37,15 +39,18 @@ MAX_UDP = 65535
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Record UDP packets on a port to a .udpcap file."
+    parser = argparse.ArgumentParser(description="Record UDP packets on a port to a .udpcap file.")
+    parser.add_argument(
+        "-p", "--port", type=int, default=12070, help="UDP port to listen on (default: 12070)"
     )
-    parser.add_argument("-p", "--port", type=int, default=12070,
-                        help="UDP port to listen on (default: 12070)")
-    parser.add_argument("-b", "--bind", default="0.0.0.0",
-                        help="bind address (default: 0.0.0.0)")
-    parser.add_argument("-o", "--output", type=Path, default=None,
-                        help="output file (default: recordings/udp_<ts>.udpcap)")
+    parser.add_argument("-b", "--bind", default="0.0.0.0", help="bind address (default: 0.0.0.0)")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=None,
+        help="output file (default: recordings/udp_<ts>.udpcap)",
+    )
     args = parser.parse_args()
 
     if args.output is None:
@@ -63,13 +68,11 @@ def main() -> int:
 
     stop = False
 
-    def _handle_sigint(signum, frame):  # noqa: ARG001
+    def _handle_sigint(signum, frame):
         nonlocal stop
         stop = True
-        try:
+        with contextlib.suppress(OSError):
             sock.close()
-        except OSError:
-            pass
 
     signal.signal(signal.SIGINT, _handle_sigint)
     signal.signal(signal.SIGTERM, _handle_sigint)
@@ -97,14 +100,14 @@ def main() -> int:
             now = time.monotonic()
             if now - last_report >= 1.0:
                 rate = total_pkts / (now - t_start)
-                print(f"  recv {total_pkts} pkts, "
-                      f"{total_bytes / 1024:.1f} kB, "
-                      f"{rate:.1f} pps")
+                print(f"  recv {total_pkts} pkts, {total_bytes / 1024:.1f} kB, {rate:.1f} pps")
                 last_report = now
 
     elapsed = time.monotonic() - t_start
-    print(f"\nDone. {total_pkts} packets, {total_bytes / 1024:.1f} kB "
-          f"in {elapsed:.2f}s -> {args.output}")
+    print(
+        f"\nDone. {total_pkts} packets, {total_bytes / 1024:.1f} kB "
+        f"in {elapsed:.2f}s -> {args.output}"
+    )
     return 0
 
 
