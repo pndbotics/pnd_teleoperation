@@ -27,6 +27,15 @@ class JoyAxesIndices(IntEnum):
     R_grip = 7
 
 
+class PicoJoyBtnIndices(IntEnum):
+    L_AxisClick = 0
+    L_X = 1
+    L_Y = 2
+    R_AxisClick = 3
+    R_A = 4
+    R_B = 5
+
+
 if __name__ == "__main__":
     for btn in JoyBtnIndices:
         print(f"Button {btn.name} has index {btn.value}")

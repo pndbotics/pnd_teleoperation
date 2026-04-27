@@ -8,6 +8,8 @@ import numpy as np
 import rclpy
 from geometry_msgs.msg import TransformStamped
 from rclpy.node import Node
+from sensor_msgs.msg import Joy
+from shared_utils.shared_utils import JoyAxesIndices, PicoJoyBtnIndices
 from tf2_ros import TransformBroadcaster
 
 from pico_mocap.utils import (
@@ -85,6 +87,7 @@ class PicoMocap(Node):
             self._frames[name] = stamped
 
         self._tf_broadcaster = TransformBroadcaster(self)
+        self._joy_pub = self.create_publisher(Joy, "pico/joy", 10)
 
         # PICO uses Unity-style coordinates (same as Vive/SteamVR):
         # Unity: x right, y up, z forward
@@ -210,10 +213,46 @@ class PicoMocap(Node):
         frame.transform.rotation.z = rqz
         frame.transform.rotation.w = rqw
 
+    def _publish_joy_from_controller(self, controller: dict, time_stamp) -> None:
+        """Map PICO `Controller` dict to `sensor_msgs/Joy` (same layout as webvr_mocap)."""
+        left = controller.get("left") or {}
+        right = controller.get("right") or {}
+
+        axes = [0.0] * len(JoyAxesIndices)
+        axes[JoyAxesIndices.L_x] = float(left.get("axisX", 0.0))
+        axes[JoyAxesIndices.L_y] = float(left.get("axisY", 0.0))
+        axes[JoyAxesIndices.L_trigger] = float(left.get("trigger", 0.0))
+        axes[JoyAxesIndices.L_grip] = float(left.get("grip", 0.0))
+        axes[JoyAxesIndices.R_x] = float(right.get("axisX", 0.0))
+        axes[JoyAxesIndices.R_y] = float(right.get("axisY", 0.0))
+        axes[JoyAxesIndices.R_trigger] = float(right.get("trigger", 0.0))
+        axes[JoyAxesIndices.R_grip] = float(right.get("grip", 0.0))
+
+        def _digital_btn(raw: object) -> int:
+            if isinstance(raw, bool):
+                return 1 if raw else 0
+            if isinstance(raw, (int, float)):
+                return 1 if float(raw) > 0.5 else 0
+            return 0
+
+        press = [0] * len(PicoJoyBtnIndices)
+        press[PicoJoyBtnIndices.L_AxisClick] = _digital_btn(left.get("axisClick", False))
+        press[PicoJoyBtnIndices.L_X] = _digital_btn(left.get("primaryButton", False))
+        press[PicoJoyBtnIndices.L_Y] = _digital_btn(left.get("secondaryButton", False))
+        press[PicoJoyBtnIndices.R_AxisClick] = _digital_btn(right.get("axisClick", False))
+        press[PicoJoyBtnIndices.R_A] = _digital_btn(right.get("primaryButton", False))
+        press[PicoJoyBtnIndices.R_B] = _digital_btn(right.get("secondaryButton", False))
+
+        joy_msg = Joy()
+        joy_msg.header.stamp = time_stamp.to_msg()
+        joy_msg.axes = axes
+        joy_msg.buttons = [int(x) for x in press]
+        self._joy_pub.publish(joy_msg)
+
     def receive_loop(self) -> None:
         while rclpy.ok():
             # UDP max payload is 65507 bytes; Pico whole-body JSON can exceed 4KB.
-            data, addr = self.sock.recvfrom(65535)
+            data, addr = self.sock.recvfrom(1024 * 4)
             time_stamp = self.get_clock().now()
             try:
                 payload = json.loads(data.decode())
@@ -236,6 +275,10 @@ class PicoMocap(Node):
 
         self._apply_root_relative_scaling(updated_names)
         self._tf_broadcaster.sendTransform(list(self._frames.values()))
+
+        controller = payload.get("Controller")
+        if isinstance(controller, dict):
+            self._publish_joy_from_controller(controller, time_stamp)
 
 
 def main(args=None) -> None:

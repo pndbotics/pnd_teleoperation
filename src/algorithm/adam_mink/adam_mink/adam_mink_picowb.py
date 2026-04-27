@@ -1,13 +1,29 @@
 #!/usr/bin/env python3
 """Pico Tracker 3-based Adam robot inverse kinematics node using Mink solver."""
 
+from collections.abc import Callable
+
 import numpy as np
 import rclpy
+from sensor_msgs.msg import Joy
+from shared_utils.shared_utils import JoyAxesIndices
 
 from adam_mink.adam_mink_base import AdamMinkBase
 from adam_mink.constants import (
     DEFAULT_FINGER_POSITION,
     DEFAULT_TIMER_PERIOD,
+    L_GRIP_FINGER,
+    L_GRIP_JOINTS,
+    L_THUMB_ROTATE_FINGER,
+    L_THUMB_ROTATE_JOINTS,
+    L_TRIGGER_FINGER,
+    L_TRIGGER_JOINTS,
+    R_GRIP_FINGER,
+    R_GRIP_JOINTS,
+    R_THUMB_ROTATE_FINGER,
+    R_THUMB_ROTATE_JOINTS,
+    R_TRIGGER_FINGER,
+    R_TRIGGER_JOINTS,
     ROOT_POSE_NUM,
 )
 
@@ -31,11 +47,94 @@ class AdamMinkPicoWbNode(AdamMinkBase):
 
         self.sim_joint_num = len(self.robot_motor_names)
 
+        self.sub_joy = self.create_subscription(
+            Joy, "pico/joy", self.joy_callback, DEFAULT_JOYSTICK_QUEUE_SIZE
+        )
+        self.init_hand_control()
         self.get_logger().info("Adam Mink Pico Wb IK node initialized.")
 
     def transform_callback(self) -> None:
         """Override transform callback to handle calibration state."""
         return super().transform_callback()
+
+    def init_hand_control(self) -> None:
+        """Initialize hand scaling functions based on Pico controller triggers."""
+        self.joy_axes = dict.fromkeys([JoyAxesIndices.L_trigger, JoyAxesIndices.R_trigger], 0.0)
+        self.joy_btns = {}
+
+        def create_scale_func(joy: dict, joy_enum, scale: float):
+            return lambda: joy.get(joy_enum, 0.0) * scale
+
+        def create_real_scale_func(joy: dict, joy_enum, scale: float):
+            return lambda: DEFAULT_FINGER_POSITION - joy.get(joy_enum, 0.0) * scale
+
+        self.hands_scale_funcs: dict[str, Callable[[], float]] = {}
+
+        # Joint mappings: use triggers for both grip and trigger joints
+        joint_mappings = [
+            (L_GRIP_JOINTS, self.joy_axes, JoyAxesIndices.L_trigger),
+            (R_GRIP_JOINTS, self.joy_axes, JoyAxesIndices.R_trigger),
+            (L_TRIGGER_JOINTS, self.joy_axes, JoyAxesIndices.L_trigger),
+            (R_TRIGGER_JOINTS, self.joy_axes, JoyAxesIndices.R_trigger),
+        ]
+
+        for joint_names, joy_dict, joy_enum in joint_mappings:
+            for name in joint_names:
+                self.hands_scale_funcs[name] = create_scale_func(joy_dict, joy_enum, np.pi / 2)
+
+        # Thumb rotate joints: fixed for Pico WB (no touch buttons mapped)
+        for name in L_THUMB_ROTATE_JOINTS:
+            self.hands_scale_funcs[name] = lambda: np.pi / 2
+        for name in R_THUMB_ROTATE_JOINTS:
+            self.hands_scale_funcs[name] = lambda: np.pi / 2
+
+        # Finger mappings
+        finger_mappings = [
+            (L_GRIP_FINGER, self.joy_axes, JoyAxesIndices.L_trigger),
+            (L_TRIGGER_FINGER, self.joy_axes, JoyAxesIndices.L_trigger),
+            (R_GRIP_FINGER, self.joy_axes, JoyAxesIndices.R_trigger),
+            (R_TRIGGER_FINGER, self.joy_axes, JoyAxesIndices.R_trigger),
+        ]
+
+        for finger_names, joy_dict, joy_enum in finger_mappings:
+            for name in finger_names:
+                self.hands_scale_funcs[name] = create_real_scale_func(
+                    joy_dict, joy_enum, DEFAULT_FINGER_POSITION
+                )
+
+        # Thumb rotate fingers: fixed
+        for name in L_THUMB_ROTATE_FINGER:
+            self.hands_scale_funcs[name] = lambda: 0.0
+        for name in R_THUMB_ROTATE_FINGER:
+            self.hands_scale_funcs[name] = lambda: 0.0
+
+        # Nonlinear thumb MCP mapping (mirrors VR SG behavior)
+        self.hands_scale_funcs["dof_pos/hand_thumb_1_Left"] = lambda: (
+            1000
+            - 1000
+            * (1 - np.exp(-5 * self.joy_axes.get(JoyAxesIndices.L_trigger, 0.0)))
+            / (1 - np.exp(-5))
+        )
+        self.hands_scale_funcs["dof_pos/hand_thumb_1_Right"] = lambda: (
+            1000
+            - 1000
+            * (1 - np.exp(-5 * self.joy_axes.get(JoyAxesIndices.R_trigger, 0.0)))
+            / (1 - np.exp(-5))
+        )
+
+    def joy_callback(self, msg: Joy) -> None:
+        """Handle Pico controller input messages."""
+        for axis in self.joy_axes:
+            self.joy_axes[axis] = msg.axes[axis.value]
+
+    def update_joint_states(self) -> None:
+        """Update joint states from Pico controller hand inputs."""
+        for name, func in self.hands_scale_funcs.items():
+            idx = self.all_joint.get(name)
+            if idx is not None:
+                self.joint_state_msg.position[ROOT_POSE_NUM + idx] = func()
+            else:
+                self.get_logger().warn(f"Motor name {name} not found in all_joint")
 
     def get_bone_frames(self) -> list[str]:
         """Get the list of bone frame names to track for Pico."""
