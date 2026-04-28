@@ -89,6 +89,9 @@ class PicoMocap(Node):
         self._tf_broadcaster = TransformBroadcaster(self)
         self._joy_pub = self.create_publisher(Joy, "pico/joy", 10)
 
+        self.axes = [0.0] * len(JoyAxesIndices)
+        self.press = [0] * len(PicoJoyBtnIndices)
+
         # PICO uses Unity-style coordinates (same as Vive/SteamVR):
         # Unity: x right, y up, z forward
         # Robot: x forward, y left, z up
@@ -115,6 +118,9 @@ class PicoMocap(Node):
             ],
         ]
         self.robot_scale = 1.0
+        self.z_offset = 0.0
+        self.robot_arm_length = 0.53
+        self.calibrated = False
 
         self.udp_ip = "0.0.0.0"
         self.udp_port = 12070
@@ -174,7 +180,7 @@ class PicoMocap(Node):
             p_scaled = root + self.robot_scale * (p - root)
             frame.transform.translation.x = float(p_scaled[0])
             frame.transform.translation.y = float(p_scaled[1])
-            frame.transform.translation.z = float(p_scaled[2])
+            frame.transform.translation.z = float(p_scaled[2]) + self.z_offset
 
     def _update_frame(
         self,
@@ -218,15 +224,14 @@ class PicoMocap(Node):
         left = controller.get("left") or {}
         right = controller.get("right") or {}
 
-        axes = [0.0] * len(JoyAxesIndices)
-        axes[JoyAxesIndices.L_x] = float(left.get("axisX", 0.0))
-        axes[JoyAxesIndices.L_y] = float(left.get("axisY", 0.0))
-        axes[JoyAxesIndices.L_trigger] = float(left.get("trigger", 0.0))
-        axes[JoyAxesIndices.L_grip] = float(left.get("grip", 0.0))
-        axes[JoyAxesIndices.R_x] = float(right.get("axisX", 0.0))
-        axes[JoyAxesIndices.R_y] = float(right.get("axisY", 0.0))
-        axes[JoyAxesIndices.R_trigger] = float(right.get("trigger", 0.0))
-        axes[JoyAxesIndices.R_grip] = float(right.get("grip", 0.0))
+        self.axes[JoyAxesIndices.L_x] = float(left.get("axisX", 0.0))
+        self.axes[JoyAxesIndices.L_y] = float(left.get("axisY", 0.0))
+        self.axes[JoyAxesIndices.L_trigger] = float(left.get("trigger", 0.0))
+        self.axes[JoyAxesIndices.L_grip] = float(left.get("grip", 0.0))
+        self.axes[JoyAxesIndices.R_x] = float(right.get("axisX", 0.0))
+        self.axes[JoyAxesIndices.R_y] = float(right.get("axisY", 0.0))
+        self.axes[JoyAxesIndices.R_trigger] = float(right.get("trigger", 0.0))
+        self.axes[JoyAxesIndices.R_grip] = float(right.get("grip", 0.0))
 
         def _digital_btn(raw: object) -> int:
             if isinstance(raw, bool):
@@ -235,18 +240,17 @@ class PicoMocap(Node):
                 return 1 if float(raw) > 0.5 else 0
             return 0
 
-        press = [0] * len(PicoJoyBtnIndices)
-        press[PicoJoyBtnIndices.L_AxisClick] = _digital_btn(left.get("axisClick", False))
-        press[PicoJoyBtnIndices.L_X] = _digital_btn(left.get("primaryButton", False))
-        press[PicoJoyBtnIndices.L_Y] = _digital_btn(left.get("secondaryButton", False))
-        press[PicoJoyBtnIndices.R_AxisClick] = _digital_btn(right.get("axisClick", False))
-        press[PicoJoyBtnIndices.R_A] = _digital_btn(right.get("primaryButton", False))
-        press[PicoJoyBtnIndices.R_B] = _digital_btn(right.get("secondaryButton", False))
+        self.press[PicoJoyBtnIndices.L_AxisClick] = _digital_btn(left.get("axisClick", False))
+        self.press[PicoJoyBtnIndices.L_X] = _digital_btn(left.get("primaryButton", False))
+        self.press[PicoJoyBtnIndices.L_Y] = _digital_btn(left.get("secondaryButton", False))
+        self.press[PicoJoyBtnIndices.R_AxisClick] = _digital_btn(right.get("axisClick", False))
+        self.press[PicoJoyBtnIndices.R_A] = _digital_btn(right.get("primaryButton", False))
+        self.press[PicoJoyBtnIndices.R_B] = _digital_btn(right.get("secondaryButton", False))
 
         joy_msg = Joy()
         joy_msg.header.stamp = time_stamp.to_msg()
-        joy_msg.axes = axes
-        joy_msg.buttons = [int(x) for x in press]
+        joy_msg.axes = self.axes
+        joy_msg.buttons = [int(x) for x in self.press]
         self._joy_pub.publish(joy_msg)
 
     def receive_loop(self) -> None:
@@ -273,12 +277,44 @@ class PicoMocap(Node):
             updated_names.append(bone["bone"])
             self._frames[bone["bone"]].header.stamp = time_stamp.to_msg()
 
+        # process calibration
+        self._process_calibration(payload)
         self._apply_root_relative_scaling(updated_names)
+        self._process_offest_calibration()
         self._tf_broadcaster.sendTransform(list(self._frames.values()))
 
         controller = payload.get("Controller")
         if isinstance(controller, dict):
             self._publish_joy_from_controller(controller, time_stamp)
+
+    def _process_calibration(self, payload: dict) -> None:
+        """Handle any calibration-related processing based on the payload."""
+        if self.press[PicoJoyBtnIndices.R_A] == 1 and not self.calibrated:
+            right_arm_length = abs(float(self._frames["r-hand"].transform.translation.x))
+            left_arm_length = abs(float(self._frames["l-hand"].transform.translation.x))
+            self.robot_scale = (
+                0.5 * right_arm_length + 0.5 * left_arm_length
+            ) / self.robot_arm_length
+            self.get_logger().info(
+                f"Calculated robot scale: {self.robot_scale:.2f} based on arm lengths (R: {right_arm_length:.2f}, L: {left_arm_length:.2f})"
+            )
+
+    def _process_offest_calibration(self) -> None:
+        # calibrate z height when A button is pressed
+        if self.press[PicoJoyBtnIndices.R_A] == 1 and not self.calibrated:
+            pelvis_frame = self._frames.get("pelvis")  # using pelvis
+            if pelvis_frame is not None:
+                self.z_offset = 1.0 - pelvis_frame.transform.translation.z
+                self.calibrated = True
+                self.get_logger().info(
+                    f"Calibrated z offset to {self.z_offset:.2f} based on pelvis height"
+                )
+        # reset calibration when B button is pressed
+        elif self.press[PicoJoyBtnIndices.R_B] == 1 and self.calibrated:
+            self.z_offset = 0.0
+            self.robot_scale = 1.0
+            self.calibrated = False
+            self.get_logger().info("Reset z offset calibration")
 
 
 def main(args=None) -> None:
