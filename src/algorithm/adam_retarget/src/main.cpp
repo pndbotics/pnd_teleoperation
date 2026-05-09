@@ -163,6 +163,25 @@ class AdamRetarget : public rclcpp::Node {
       result.insert(result.end(), last_passthrough_msg_.position.begin(), last_passthrough_msg_.position.end());
     }
 
+    // fix joints
+    for (size_t i = 0; i < labels.size(); i++) {
+      if (labels[i] == "dof_pos/waistRoll") {
+        result[i] = 0.0;
+      }
+      else if (labels[i] == "dof_pos/waistPitch") {
+        result[i] = 0.0;
+      }
+      else if (labels[i] == "dof_pos/waistYaw") {
+        result[i] = 0.0;
+      }
+      else if (labels[i] == "dof_pos/neckYaw") {
+        result[i] = 0.0;
+      }
+      else if (labels[i] == "dof_pos/neckPitch") {
+        result[i] = 0.0;
+      }
+    }
+
     sensor_msgs::msg::JointState joint_state;
     joint_state.header.stamp = this->now();
     joint_state.name = labels;
