@@ -28,9 +28,9 @@ from adam_mink.constants import (
 class AdamMinkVRNodeSG(AdamMinkVRNode):
     """VR SG-based Adam robot IK node with joystick control."""
 
-    def __init__(self) -> None:
+    def __init__(self, node_name: str = "adam_mink_vr_sg") -> None:
         """Initialize the VR SG node."""
-        super().__init__("adam_mink_vr_sg")
+        super().__init__(node_name)
         self.get_logger().info("Adam Mink VR SG IK node initialized.")
 
     def init_hand_control(self) -> None:
