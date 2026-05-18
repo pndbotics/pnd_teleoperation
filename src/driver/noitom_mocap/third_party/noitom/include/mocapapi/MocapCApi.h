@@ -21,8 +21,8 @@
 
 #define MOCAP_API_VERSION_MAJOR 0
 #define MOCAP_API_VERSION_MINOR 0
-#define MOCAP_API_VERSION_BUILD 43
-#define MOCAP_API_VERSION_REVISION 774f9e52
+#define MOCAP_API_VERSION_BUILD 73
+#define MOCAP_API_VERSION_REVISION 19a54f85
 
 enum EMCPError
 {
@@ -123,8 +123,10 @@ struct MCPRigidBody_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetRigidBodyId) (int * id, MCPRigidBodyHandle_t ulRigidBodyHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetRigidBodyJointTag) (EMCPJointTag * jointTag_, MCPRigidBodyHandle_t ulRigidBodyHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetRigidBodyAxisAngle) (float * x, float * y, float * z, float * angle, MCPRigidBodyHandle_t ulRigidBodyHandle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetRigidBodyType) (uint32_t * type, MCPRigidBodyHandle_t ulRigidBodyHandle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetRigidBodyName) (const char ** name, MCPRigidBodyHandle_t ulRigidBodyHandle);
 };
-static const char * IMCPRigidBody_Version = "PROC_TABLE:IMCPRigidBody_001";
+static const char * IMCPRigidBody_Version = "PROC_TABLE:IMCPRigidBody_002";
 typedef uint64_t MCPTrackerHandle_t;
 struct MCPTracker_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * SendMessageData) (const char * message, int len, MCPTrackerHandle_t ulTrackerHandle);
@@ -135,6 +137,14 @@ struct MCPTracker_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetDeviceName) (int serialNum, const char ** name, MCPTrackerHandle_t ulTrackerHandle);
 };
 static const char * IMCPTracker_Version = "PROC_TABLE:IMCPTracker_001";
+enum EMCPMagEnv
+{
+    kMagEnv_Unknown=-1,
+    kMagEnv_Worst=0,
+    kMagEnv_Worse=1,
+    kMagEnv_Bad=2,
+    kMagEnv_Good=3
+};
 typedef uint64_t MCPSensorModuleHandle_t;
 struct MCPSensorModule_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModulePosture) (float * x, float * y, float * z, float * w, MCPSensorModuleHandle_t sensorModuleHandle);
@@ -145,7 +155,8 @@ struct MCPSensorModule_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModuleTemperature) (float * temperature, MCPSensorModuleHandle_t sensorModuleHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModulePostureTimeCode) (uint32_t * hour, uint32_t * minute, uint32_t * second, uint32_t * frame, uint32_t * rate, MCPSensorModuleHandle_t sensorModuleHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModulePostureTime) (uint32_t * hour, uint32_t * minute, uint32_t * second, uint32_t * millisecond, MCPSensorModuleHandle_t sensorModuleHandle);
-    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModuleMagEnvValue) (int * pMagEnvValue, MCPSensorModuleHandle_t sensorModuleHandle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModuleBoundBone) (EMCPJointTag * bone, MCPSensorModuleHandle_t sensorModuleHandle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModuleMagEnvValue) (EMCPMagEnv * pMagEnvValue, MCPSensorModuleHandle_t sensorModuleHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSesnorModulePacketRate) (float * pRate, MCPSensorModuleHandle_t sensorModuleHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModuleSerialNumber) (const char ** serialNumber, MCPSensorModuleHandle_t sensorModuleHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModuleFirmwareVersionString) (const char ** firmwareVersion, MCPSensorModuleHandle_t sensorModuleHandle);
@@ -196,8 +207,9 @@ struct MCPAvatar_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetAvatarPostureIndex) (uint32_t * postureIndex, MCPAvatarHandle_t ulAvatarHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetAvatarPostureTimeCode) (uint32_t * hour, uint32_t * minute, uint32_t * second, uint32_t * frame, uint32_t * rate, MCPAvatarHandle_t ulAvatarHandle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetAvatarPostureTime) (uint32_t * hour, uint32_t * minute, uint32_t * second, uint32_t * millisecond, MCPAvatarHandle_t ulAvatarHandle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetAvatarPosturePtpTime) (uint32_t * second, uint32_t * nanosecond, MCPAvatarHandle_t ulAvatarHandle);
 };
-static const char * IMCPAvatar_Version = "PROC_TABLE:IMCPAvatar_004";
+static const char * IMCPAvatar_Version = "PROC_TABLE:IMCPAvatar_005";
 typedef uint64_t MCPMarkerHandle_t;
 struct MCPMarker_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetMarkerPosition) (float * x, float * y, float * z, MCPMarkerHandle_t handle);
@@ -223,6 +235,10 @@ struct MCPAliceHub_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetPWRTimestamp) (uint64_t * timestamp);
 };
 static const char * IMCPAliceHub_Version = "PROC_TABLE:IMCPAliceHub_001";
+enum EStartCaptureFlag
+{
+    StartCaptureFlag_EnablePtp=1
+};
 enum EMCPCommand
 {
     CommandStartCapture=0,
@@ -233,7 +249,8 @@ enum EMCPCommand
     CommandStopRecored=5,
     CommandResumeOriginalPosture=6,
     CommandClearZeroMotionDrift=7,
-    CommandResumeOriginalHandsPosture=8
+    CommandResumeOriginalHandsPosture=8,
+    CommandPilotSimulationDriving=9
 };
 enum EMCPCalibrateMotionFlag
 {
@@ -263,6 +280,11 @@ enum EMCPCommandProgress
 {
     CommandProgress_CalibrateMotion=0
 };
+enum EMCPRecoredFlag
+{
+    RecoredFlag_AutoRecalculating=1,
+    RecoredFlag_AutoExportingBvh=2
+};
 typedef uint64_t MCPCommandHandle_t;
 struct MCPCommand_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * CreateCommand) (uint32_t cmd, MCPCommandHandle_t * handle_);
@@ -278,7 +300,7 @@ struct MCPCommand_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * RemoveCommandExtraLong) (uint32_t extraLongIndex, MCPCommandHandle_t handle_);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCommandTag) (uint32_t * pTag, MCPCommandHandle_t handle_);
 };
-static const char * IMCPCommand_Version = "PROC_TABLE:IMCPCommand_002";
+static const char * IMCPCommand_Version = "PROC_TABLE:IMCPCommand_003";
 enum EMCPCalibrateMotionProgressStep
 {
     CalibrateMotionProgressStep_Prepare=0,
@@ -288,20 +310,26 @@ enum EMCPCalibrateMotionProgressStep
 typedef uint64_t MCPCalibrateMotionProgressHandle_t;
 struct MCPCalibrateMotionProgress_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressCountOfSupportPoses) (uint32_t * pCount, MCPCalibrateMotionProgressHandle_t handle_);
-    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressNameOfSupportPose) (char * name, uint32_t * pLenOfName, uint32_t index, MCPCalibrateMotionProgressHandle_t handle_);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressNameOfSupportPose) (char * pName, uint32_t * pLenOfName, uint32_t index, MCPCalibrateMotionProgressHandle_t handle_);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressStepOfPose) (uint32_t * pStep, const char * name, MCPCalibrateMotionProgressHandle_t handle_);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressCountdownOfPose) (uint32_t * pCountdown, const char * name, MCPCalibrateMotionProgressHandle_t handle_);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressProgressOfPose) (uint32_t * pProgress, const char * name, MCPCalibrateMotionProgressHandle_t handle_);
-    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressStepOfCurrentPose) (uint32_t * pStep, char * name, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_);
-    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressCountdownOfCurrentPose) (uint32_t * pCountdown, char * name, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_);
-    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressProgressOfCurrentPose) (uint32_t * pProgress, char * name, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressStepOfCurrentPose) (uint32_t * pStep, char * pName, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressCountdownOfCurrentPose) (uint32_t * pCountdown, char * pName, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetCalibrateMotionProgressProgressOfCurrentPose) (uint32_t * pProgress, char * pName, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_);
 };
 static const char * IMCPCalibrateMotionProgress_Version = "PROC_TABLE:IMCPCalibrateMotionProgress_001";
+enum EMCPMasterStatus
+{
+    MasterStatus_Online=0,
+    MasterStatus_Offline=1
+};
 typedef uint64_t MCPSystemHandle_t;
 struct MCPSystem_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetMasterVersion) (const char ** pstr, MCPSystemHandle_t handle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetMasterSerialNumber) (const char ** pstr, MCPSystemHandle_t handle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetSensorModules) (MCPSensorModuleHandle_t * pHandles, uint32_t * pLenOfHandles, MCPSystemHandle_t handle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetMasterStatus) (EMCPMasterStatus * masterStatus, MCPSystemHandle_t handle);
 };
 static const char * IMCPSystem_Version = "PROC_TABLE:IMCPSystem_001";
 struct MCPEvent_Reserved_t
@@ -561,10 +589,10 @@ struct MCPRobot_ProcTable {
     EMCPError (MCP_PROC_TABLE_CALLTYPE * GetRobotRootPosition) (float * x, float * y, float * z, MCPRobotHandle_t handle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * DestroyRobot) (MCPRobotHandle_t handle);
     EMCPError (MCP_PROC_TABLE_CALLTYPE * RunRobotStep) (MCPRobotHandle_t handle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * RunRobotStep1) (float fixedDelta, MCPRobotHandle_t handle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetRobotSlideSpeed) (float * value, MCPRobotHandle_t handle);
+    EMCPError (MCP_PROC_TABLE_CALLTYPE * GetRobotSlideHeight) (float * value, MCPRobotHandle_t handle);
 };
 static const char * IMCPRobot_Version = "PROC_TABLE:IMCPRobot_001";
-MCP_PROC_TABLE_API EMCPError MCP_PROC_TABLE_CALLTYPE MCPGetGenericInterface(const char * pchInterfaceVersion, void ** ppInterface);
-MCP_PROC_TABLE_API void MCP_PROC_TABLE_CALLTYPE MCPGetMocapApiVersion(uint32_t * major, uint32_t * minor, uint32_t * build, uint32_t * revision);
-MCP_PROC_TABLE_API const char * MCP_PROC_TABLE_CALLTYPE MCPGetMocapApiVersionString();
 
 #endif /* END OF _NOITOM_CMOCAPAPI_H */
