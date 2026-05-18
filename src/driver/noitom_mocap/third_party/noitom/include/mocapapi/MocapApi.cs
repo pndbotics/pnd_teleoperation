@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Text;
 #if UNITY_5_3_OR_NEWER
     using UnityEngine;
 #endif
@@ -141,6 +142,20 @@ namespace MocapApi
         {
             return ProcTable.GetRigidBodyAxisAngle(ref x, ref y, ref z, ref angle, ulRigidBodyHandle);
         }
+        public EMCPError GetRigidBodyType(ref uint type, ulong ulRigidBodyHandle)
+        {
+            return ProcTable.GetRigidBodyType(ref type, ulRigidBodyHandle);
+        }
+        public EMCPError GetRigidBodyName(ref string name, ulong ulRigidBodyHandle)
+        {
+            IntPtr name_ = IntPtr.Zero;
+            var r = ProcTable.GetRigidBodyName(ref name_, ulRigidBodyHandle);
+            if (r == EMCPError.Error_None)
+            {
+                name = Marshal.PtrToStringAnsi(name_);
+            }
+            return r;
+        }
         [StructLayout(LayoutKind.Sequential)]
         private struct MCPRigidBody_ProcTable
         {
@@ -174,10 +189,20 @@ namespace MocapApi
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetRigidBodyAxisAngle GetRigidBodyAxisAngle;
 
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            internal delegate EMCPError _GetRigidBodyType(ref uint type, ulong ulRigidBodyHandle);
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            internal _GetRigidBodyType GetRigidBodyType;
+
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            internal delegate EMCPError _GetRigidBodyName(ref IntPtr name, ulong ulRigidBodyHandle);
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            internal _GetRigidBodyName GetRigidBodyName;
+
         };
         private MCPRigidBody_ProcTable ProcTable;
         private static IMCPRigidBody rigidBody;
-        private const string IMCPRigidBody_Version = "IMCPRigidBody_001";
+        private const string IMCPRigidBody_Version = "IMCPRigidBody_002";
         private List<MCPEventHandleProc> eventHandleProcList = new List<MCPEventHandleProc>();
         private IMCPRigidBody()
         {
@@ -282,6 +307,14 @@ namespace MocapApi
             ProcTable = (MCPTracker_ProcTable)Marshal.PtrToStructure(pp, typeof(MCPTracker_ProcTable));
         }
     };
+    public enum EMCPMagEnv
+    {
+        kMagEnv_Unknown=-1,
+        kMagEnv_Worst=0,
+        kMagEnv_Worse=1,
+        kMagEnv_Bad=2,
+        kMagEnv_Good=3
+    };
     public class IMCPSensorModule
     {
         static public IMCPSensorModule SensorModule
@@ -323,11 +356,15 @@ namespace MocapApi
         {
             return ProcTable.GetSensorModulePostureTimeCode(ref hour, ref minute, ref second, ref frame, ref rate, sensorModuleHandle);
         }
-        public EMCPError GetSensorModulePostureTime(ref uint hour, ref uint minute, [In, Out]uint[] second, ref uint millisecond, ulong sensorModuleHandle)
+        public EMCPError GetSensorModulePostureTime(ref uint hour, ref uint minute, ref uint second, ref uint millisecond, ulong sensorModuleHandle)
         {
-            return ProcTable.GetSensorModulePostureTime(ref hour, ref minute, second, ref millisecond, sensorModuleHandle);
+            return ProcTable.GetSensorModulePostureTime(ref hour, ref minute, ref second, ref millisecond, sensorModuleHandle);
         }
-        public EMCPError GetSensorModuleMagEnvValue(ref int pMagEnvValue, ulong sensorModuleHandle)
+        public EMCPError GetSensorModuleBoundBone(ref EMCPJointTag bone, ulong sensorModuleHandle)
+        {
+            return ProcTable.GetSensorModuleBoundBone(ref bone, sensorModuleHandle);
+        }
+        public EMCPError GetSensorModuleMagEnvValue(ref EMCPMagEnv pMagEnvValue, ulong sensorModuleHandle)
         {
             return ProcTable.GetSensorModuleMagEnvValue(ref pMagEnvValue, sensorModuleHandle);
         }
@@ -398,12 +435,17 @@ namespace MocapApi
             internal _GetSensorModulePostureTimeCode GetSensorModulePostureTimeCode;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetSensorModulePostureTime(ref uint hour, ref uint minute, [In, Out]uint[] second, ref uint millisecond, ulong sensorModuleHandle);
+            internal delegate EMCPError _GetSensorModulePostureTime(ref uint hour, ref uint minute, ref uint second, ref uint millisecond, ulong sensorModuleHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetSensorModulePostureTime GetSensorModulePostureTime;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetSensorModuleMagEnvValue(ref int pMagEnvValue, ulong sensorModuleHandle);
+            internal delegate EMCPError _GetSensorModuleBoundBone(ref EMCPJointTag bone, ulong sensorModuleHandle);
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            internal _GetSensorModuleBoundBone GetSensorModuleBoundBone;
+
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            internal delegate EMCPError _GetSensorModuleMagEnvValue(ref EMCPMagEnv pMagEnvValue, ulong sensorModuleHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetSensorModuleMagEnvValue GetSensorModuleMagEnvValue;
 
@@ -546,8 +588,20 @@ namespace MocapApi
         {
             return ProcTable.GetJointDefaultLocalPosition(ref x, ref y, ref z, ulJointHandle);
         }
-        public EMCPError GetJointChild([In, Out]ulong[] pJointHandle, ref uint punSizeOfJointHandle, ulong ulJointHandle)
+        public EMCPError GetJointChild([In, Out] ulong[] pJointHandle, ref uint punSizeOfJointHandle, ulong ulJointHandle)
         {
+            return ProcTable.GetJointChild(pJointHandle, ref punSizeOfJointHandle, ulJointHandle);
+        }
+        public EMCPError GetJointChild(out ulong[] pJointHandle, ulong ulJointHandle)
+        {
+            pJointHandle = null;
+            uint punSizeOfJointHandle = 0;
+            var err_ = ProcTable.GetJointChild(pJointHandle, ref punSizeOfJointHandle, ulJointHandle);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pJointHandle = new ulong[punSizeOfJointHandle];
             return ProcTable.GetJointChild(pJointHandle, ref punSizeOfJointHandle, ulJointHandle);
         }
         public EMCPError GetJointBodyPart(ref ulong pBodyPartHandle, ulong ulJointHandle)
@@ -572,8 +626,20 @@ namespace MocapApi
             }
             return r;
         }
-        public EMCPError GetJointChildJointTag([In, Out]EMCPJointTag[] pJointTag, ref uint punSizeOfJointTag, EMCPJointTag jointTag)
+        public EMCPError GetJointChildJointTag([In, Out] EMCPJointTag[] pJointTag, ref uint punSizeOfJointTag, EMCPJointTag jointTag)
         {
+            return ProcTable.GetJointChildJointTag(pJointTag, ref punSizeOfJointTag, jointTag);
+        }
+        public EMCPError GetJointChildJointTag(out EMCPJointTag[] pJointTag, EMCPJointTag jointTag)
+        {
+            pJointTag = null;
+            uint punSizeOfJointTag = 0;
+            var err_ = ProcTable.GetJointChildJointTag(pJointTag, ref punSizeOfJointTag, jointTag);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pJointTag = new EMCPJointTag[punSizeOfJointTag];
             return ProcTable.GetJointChildJointTag(pJointTag, ref punSizeOfJointTag, jointTag);
         }
         public EMCPError GetJointParentJointTag(ref EMCPJointTag pJointTag, EMCPJointTag jointTag)
@@ -625,7 +691,7 @@ namespace MocapApi
             internal _GetJointDefaultLocalPosition GetJointDefaultLocalPosition;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetJointChild([In, Out]ulong[] pJointHandle, ref uint punSizeOfJointHandle, ulong ulJointHandle);
+            internal delegate EMCPError _GetJointChild([In, Out] ulong[] pJointHandle, ref uint punSizeOfJointHandle, ulong ulJointHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetJointChild GetJointChild;
 
@@ -650,7 +716,7 @@ namespace MocapApi
             internal _GetJointNameByTag GetJointNameByTag;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetJointChildJointTag([In, Out]EMCPJointTag[] pJointTag, ref uint punSizeOfJointTag, EMCPJointTag jointTag);
+            internal delegate EMCPError _GetJointChildJointTag([In, Out] EMCPJointTag[] pJointTag, ref uint punSizeOfJointTag, EMCPJointTag jointTag);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetJointChildJointTag GetJointChildJointTag;
 
@@ -716,8 +782,20 @@ namespace MocapApi
         {
             return ProcTable.GetAvatarRootJoint(ref pJointHandle, ulAvatarHandle);
         }
-        public EMCPError GetAvatarJoints([In, Out]ulong[] pJointHandle, ref uint punSizeOfJointHandle, ulong ulAvatarHandle)
+        public EMCPError GetAvatarJoints([In, Out] ulong[] pJointHandle, ref uint punSizeOfJointHandle, ulong ulAvatarHandle)
         {
+            return ProcTable.GetAvatarJoints(pJointHandle, ref punSizeOfJointHandle, ulAvatarHandle);
+        }
+        public EMCPError GetAvatarJoints(out ulong[] pJointHandle, ulong ulAvatarHandle)
+        {
+            pJointHandle = null;
+            uint punSizeOfJointHandle = 0;
+            var err_ = ProcTable.GetAvatarJoints(pJointHandle, ref punSizeOfJointHandle, ulAvatarHandle);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pJointHandle = new ulong[punSizeOfJointHandle];
             return ProcTable.GetAvatarJoints(pJointHandle, ref punSizeOfJointHandle, ulAvatarHandle);
         }
         public EMCPError GetAvatarJointByName(string name, ref ulong pJointHandle, ulong ulAvatarHandle)
@@ -734,8 +812,20 @@ namespace MocapApi
             }
             return r;
         }
-        public EMCPError GetAvatarRigidBodies([In, Out]ulong[] vRigidBodies, ref uint punSizeOfRigidBodies, ulong ulAvatarHandle)
+        public EMCPError GetAvatarRigidBodies([In, Out] ulong[] vRigidBodies, ref uint punSizeOfRigidBodies, ulong ulAvatarHandle)
         {
+            return ProcTable.GetAvatarRigidBodies(vRigidBodies, ref punSizeOfRigidBodies, ulAvatarHandle);
+        }
+        public EMCPError GetAvatarRigidBodies(out ulong[] vRigidBodies, ulong ulAvatarHandle)
+        {
+            vRigidBodies = null;
+            uint punSizeOfRigidBodies = 0;
+            var err_ = ProcTable.GetAvatarRigidBodies(vRigidBodies, ref punSizeOfRigidBodies, ulAvatarHandle);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            vRigidBodies = new ulong[punSizeOfRigidBodies];
             return ProcTable.GetAvatarRigidBodies(vRigidBodies, ref punSizeOfRigidBodies, ulAvatarHandle);
         }
         public EMCPError GetAvatarJointHierarchy(ref string ppStr)
@@ -756,9 +846,13 @@ namespace MocapApi
         {
             return ProcTable.GetAvatarPostureTimeCode(ref hour, ref minute, ref second, ref frame, ref rate, ulAvatarHandle);
         }
-        public EMCPError GetAvatarPostureTime(ref uint hour, ref uint minute, [In, Out]uint[] second, ref uint millisecond, ulong ulAvatarHandle)
+        public EMCPError GetAvatarPostureTime(ref uint hour, ref uint minute, ref uint second, ref uint millisecond, ulong ulAvatarHandle)
         {
-            return ProcTable.GetAvatarPostureTime(ref hour, ref minute, second, ref millisecond, ulAvatarHandle);
+            return ProcTable.GetAvatarPostureTime(ref hour, ref minute, ref second, ref millisecond, ulAvatarHandle);
+        }
+        public EMCPError GetAvatarPosturePtpTime(ref uint second, ref uint nanosecond, ulong ulAvatarHandle)
+        {
+            return ProcTable.GetAvatarPosturePtpTime(ref second, ref nanosecond, ulAvatarHandle);
         }
         [StructLayout(LayoutKind.Sequential)]
         private struct MCPAvatar_ProcTable
@@ -774,7 +868,7 @@ namespace MocapApi
             internal _GetAvatarRootJoint GetAvatarRootJoint;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetAvatarJoints([In, Out]ulong[] pJointHandle, ref uint punSizeOfJointHandle, ulong ulAvatarHandle);
+            internal delegate EMCPError _GetAvatarJoints([In, Out] ulong[] pJointHandle, ref uint punSizeOfJointHandle, ulong ulAvatarHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetAvatarJoints GetAvatarJoints;
 
@@ -789,7 +883,7 @@ namespace MocapApi
             internal _GetAvatarName GetAvatarName;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetAvatarRigidBodies([In, Out]ulong[] vRigidBodies, ref uint punSizeOfRigidBodies, ulong ulAvatarHandle);
+            internal delegate EMCPError _GetAvatarRigidBodies([In, Out] ulong[] vRigidBodies, ref uint punSizeOfRigidBodies, ulong ulAvatarHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetAvatarRigidBodies GetAvatarRigidBodies;
 
@@ -809,14 +903,19 @@ namespace MocapApi
             internal _GetAvatarPostureTimeCode GetAvatarPostureTimeCode;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetAvatarPostureTime(ref uint hour, ref uint minute, [In, Out]uint[] second, ref uint millisecond, ulong ulAvatarHandle);
+            internal delegate EMCPError _GetAvatarPostureTime(ref uint hour, ref uint minute, ref uint second, ref uint millisecond, ulong ulAvatarHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetAvatarPostureTime GetAvatarPostureTime;
+
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            internal delegate EMCPError _GetAvatarPosturePtpTime(ref uint second, ref uint nanosecond, ulong ulAvatarHandle);
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            internal _GetAvatarPosturePtpTime GetAvatarPosturePtpTime;
 
         };
         private MCPAvatar_ProcTable ProcTable;
         private static IMCPAvatar avatar;
-        private const string IMCPAvatar_Version = "IMCPAvatar_004";
+        private const string IMCPAvatar_Version = "IMCPAvatar_005";
         private List<MCPEventHandleProc> eventHandleProcList = new List<MCPEventHandleProc>();
         private IMCPAvatar()
         {
@@ -951,32 +1050,80 @@ namespace MocapApi
                 return aliceHub;
             }
         }
-        public EMCPError GetSensorModuleList([In, Out]ulong[] pHandles, ref uint nHandles)
+        public EMCPError GetSensorModuleList([In, Out] ulong[] pHandles, ref uint nHandles)
         {
+            return ProcTable.GetSensorModuleList(pHandles, ref nHandles);
+        }
+        public EMCPError GetSensorModuleList(out ulong[] pHandles)
+        {
+            pHandles = null;
+            uint nHandles = 0;
+            var err_ = ProcTable.GetSensorModuleList(pHandles, ref nHandles);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pHandles = new ulong[nHandles];
             return ProcTable.GetSensorModuleList(pHandles, ref nHandles);
         }
         public EMCPError GetSensorModuleTimestamp(ref ulong timestamp)
         {
             return ProcTable.GetSensorModuleTimestamp(ref timestamp);
         }
-        public EMCPError GetMarkerList([In, Out]ulong[] pHandles, ref uint nHandles)
+        public EMCPError GetMarkerList([In, Out] ulong[] pHandles, ref uint nHandles)
         {
+            return ProcTable.GetMarkerList(pHandles, ref nHandles);
+        }
+        public EMCPError GetMarkerList(out ulong[] pHandles)
+        {
+            pHandles = null;
+            uint nHandles = 0;
+            var err_ = ProcTable.GetMarkerList(pHandles, ref nHandles);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pHandles = new ulong[nHandles];
             return ProcTable.GetMarkerList(pHandles, ref nHandles);
         }
         public EMCPError GetMarkerTimestamp(ref ulong timestamp)
         {
             return ProcTable.GetMarkerTimestamp(ref timestamp);
         }
-        public EMCPError GetRigidBodyList([In, Out]ulong[] pHandles, ref uint nHandles)
+        public EMCPError GetRigidBodyList([In, Out] ulong[] pHandles, ref uint nHandles)
         {
+            return ProcTable.GetRigidBodyList(pHandles, ref nHandles);
+        }
+        public EMCPError GetRigidBodyList(out ulong[] pHandles)
+        {
+            pHandles = null;
+            uint nHandles = 0;
+            var err_ = ProcTable.GetRigidBodyList(pHandles, ref nHandles);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pHandles = new ulong[nHandles];
             return ProcTable.GetRigidBodyList(pHandles, ref nHandles);
         }
         public EMCPError GetRigidBodyTimestamp(ref ulong timestamp)
         {
             return ProcTable.GetRigidBodyTimestamp(ref timestamp);
         }
-        public EMCPError GetPWRList([In, Out]ulong[] pHandles, ref uint nHandles)
+        public EMCPError GetPWRList([In, Out] ulong[] pHandles, ref uint nHandles)
         {
+            return ProcTable.GetPWRList(pHandles, ref nHandles);
+        }
+        public EMCPError GetPWRList(out ulong[] pHandles)
+        {
+            pHandles = null;
+            uint nHandles = 0;
+            var err_ = ProcTable.GetPWRList(pHandles, ref nHandles);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pHandles = new ulong[nHandles];
             return ProcTable.GetPWRList(pHandles, ref nHandles);
         }
         public EMCPError GetPWRTimestamp(ref ulong timestamp)
@@ -987,7 +1134,7 @@ namespace MocapApi
         private struct MCPAliceHub_ProcTable
         {
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetSensorModuleList([In, Out]ulong[] pHandles, ref uint nHandles);
+            internal delegate EMCPError _GetSensorModuleList([In, Out] ulong[] pHandles, ref uint nHandles);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetSensorModuleList GetSensorModuleList;
 
@@ -997,7 +1144,7 @@ namespace MocapApi
             internal _GetSensorModuleTimestamp GetSensorModuleTimestamp;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetMarkerList([In, Out]ulong[] pHandles, ref uint nHandles);
+            internal delegate EMCPError _GetMarkerList([In, Out] ulong[] pHandles, ref uint nHandles);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetMarkerList GetMarkerList;
 
@@ -1007,7 +1154,7 @@ namespace MocapApi
             internal _GetMarkerTimestamp GetMarkerTimestamp;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetRigidBodyList([In, Out]ulong[] pHandles, ref uint nHandles);
+            internal delegate EMCPError _GetRigidBodyList([In, Out] ulong[] pHandles, ref uint nHandles);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetRigidBodyList GetRigidBodyList;
 
@@ -1017,7 +1164,7 @@ namespace MocapApi
             internal _GetRigidBodyTimestamp GetRigidBodyTimestamp;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetPWRList([In, Out]ulong[] pHandles, ref uint nHandles);
+            internal delegate EMCPError _GetPWRList([In, Out] ulong[] pHandles, ref uint nHandles);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetPWRList GetPWRList;
 
@@ -1042,6 +1189,10 @@ namespace MocapApi
             ProcTable = (MCPAliceHub_ProcTable)Marshal.PtrToStructure(pp, typeof(MCPAliceHub_ProcTable));
         }
     };
+    public enum EStartCaptureFlag
+    {
+        StartCaptureFlag_EnablePtp=1
+    };
     public enum EMCPCommand
     {
         CommandStartCapture=0,
@@ -1052,7 +1203,8 @@ namespace MocapApi
         CommandStopRecored=5,
         CommandResumeOriginalPosture=6,
         CommandClearZeroMotionDrift=7,
-        CommandResumeOriginalHandsPosture=8
+        CommandResumeOriginalHandsPosture=8,
+        CommandPilotSimulationDriving=9
     };
     public enum EMCPCalibrateMotionFlag
     {
@@ -1081,6 +1233,11 @@ namespace MocapApi
     public enum EMCPCommandProgress
     {
         CommandProgress_CalibrateMotion=0
+    };
+    public enum EMCPRecoredFlag
+    {
+        RecoredFlag_AutoRecalculating=1,
+        RecoredFlag_AutoExportingBvh=2
     };
     public class IMCPCommand
     {
@@ -1221,7 +1378,7 @@ namespace MocapApi
         };
         private MCPCommand_ProcTable ProcTable;
         private static IMCPCommand command;
-        private const string IMCPCommand_Version = "IMCPCommand_002";
+        private const string IMCPCommand_Version = "IMCPCommand_003";
         private List<MCPEventHandleProc> eventHandleProcList = new List<MCPEventHandleProc>();
         private IMCPCommand()
         {
@@ -1257,9 +1414,28 @@ namespace MocapApi
         {
             return ProcTable.GetCalibrateMotionProgressCountOfSupportPoses(ref pCount, handle_);
         }
-        public EMCPError GetCalibrateMotionProgressNameOfSupportPose(ref char name, ref uint pLenOfName, uint index, ulong handle_)
+        public EMCPError GetCalibrateMotionProgressNameOfSupportPose([In, Out] byte[] pName, ref uint pLenOfName, uint index, ulong handle_)
         {
-            return ProcTable.GetCalibrateMotionProgressNameOfSupportPose(ref name, ref pLenOfName, index, handle_);
+            return ProcTable.GetCalibrateMotionProgressNameOfSupportPose(pName, ref pLenOfName, index, handle_);
+        }
+        public EMCPError GetCalibrateMotionProgressNameOfSupportPose(out string pName, uint index, ulong handle_)
+        {
+            pName = null;
+            byte[] pName_ = null;
+            uint pLenOfName = 0;
+            var err_ = ProcTable.GetCalibrateMotionProgressNameOfSupportPose(pName_, ref pLenOfName, index, handle_);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pName_ = new byte[pLenOfName];
+            err_ = ProcTable.GetCalibrateMotionProgressNameOfSupportPose(pName_, ref pLenOfName, index, handle_);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pName=Encoding.UTF8.GetString(pName_);
+            return err_;
         }
         public EMCPError GetCalibrateMotionProgressStepOfPose(ref uint pStep, string name, ulong handle_)
         {
@@ -1273,17 +1449,74 @@ namespace MocapApi
         {
             return ProcTable.GetCalibrateMotionProgressProgressOfPose(ref pProgress, name, handle_);
         }
-        public EMCPError GetCalibrateMotionProgressStepOfCurrentPose(ref uint pStep, ref char name, ref uint pLenOfName, ulong handle_)
+        public EMCPError GetCalibrateMotionProgressStepOfCurrentPose(ref uint pStep, [In, Out] byte[] pName, ref uint pLenOfName, ulong handle_)
         {
-            return ProcTable.GetCalibrateMotionProgressStepOfCurrentPose(ref pStep, ref name, ref pLenOfName, handle_);
+            return ProcTable.GetCalibrateMotionProgressStepOfCurrentPose(ref pStep, pName, ref pLenOfName, handle_);
         }
-        public EMCPError GetCalibrateMotionProgressCountdownOfCurrentPose(ref uint pCountdown, ref char name, ref uint pLenOfName, ulong handle_)
+        public EMCPError GetCalibrateMotionProgressStepOfCurrentPose(ref uint pStep, out string pName, ulong handle_)
         {
-            return ProcTable.GetCalibrateMotionProgressCountdownOfCurrentPose(ref pCountdown, ref name, ref pLenOfName, handle_);
+            pName = null;
+            byte[] pName_ = null;
+            uint pLenOfName = 0;
+            var err_ = ProcTable.GetCalibrateMotionProgressStepOfCurrentPose(ref pStep, pName_, ref pLenOfName, handle_);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pName_ = new byte[pLenOfName];
+            err_ = ProcTable.GetCalibrateMotionProgressStepOfCurrentPose(ref pStep, pName_, ref pLenOfName, handle_);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pName=Encoding.UTF8.GetString(pName_);
+            return err_;
         }
-        public EMCPError GetCalibrateMotionProgressProgressOfCurrentPose(ref uint pProgress, ref char name, ref uint pLenOfName, ulong handle_)
+        public EMCPError GetCalibrateMotionProgressCountdownOfCurrentPose(ref uint pCountdown, [In, Out] byte[] pName, ref uint pLenOfName, ulong handle_)
         {
-            return ProcTable.GetCalibrateMotionProgressProgressOfCurrentPose(ref pProgress, ref name, ref pLenOfName, handle_);
+            return ProcTable.GetCalibrateMotionProgressCountdownOfCurrentPose(ref pCountdown, pName, ref pLenOfName, handle_);
+        }
+        public EMCPError GetCalibrateMotionProgressCountdownOfCurrentPose(ref uint pCountdown, out string pName, ulong handle_)
+        {
+            pName = null;
+            byte[] pName_ = null;
+            uint pLenOfName = 0;
+            var err_ = ProcTable.GetCalibrateMotionProgressCountdownOfCurrentPose(ref pCountdown, pName_, ref pLenOfName, handle_);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pName_ = new byte[pLenOfName];
+            err_ = ProcTable.GetCalibrateMotionProgressCountdownOfCurrentPose(ref pCountdown, pName_, ref pLenOfName, handle_);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pName=Encoding.UTF8.GetString(pName_);
+            return err_;
+        }
+        public EMCPError GetCalibrateMotionProgressProgressOfCurrentPose(ref uint pProgress, [In, Out] byte[] pName, ref uint pLenOfName, ulong handle_)
+        {
+            return ProcTable.GetCalibrateMotionProgressProgressOfCurrentPose(ref pProgress, pName, ref pLenOfName, handle_);
+        }
+        public EMCPError GetCalibrateMotionProgressProgressOfCurrentPose(ref uint pProgress, out string pName, ulong handle_)
+        {
+            pName = null;
+            byte[] pName_ = null;
+            uint pLenOfName = 0;
+            var err_ = ProcTable.GetCalibrateMotionProgressProgressOfCurrentPose(ref pProgress, pName_, ref pLenOfName, handle_);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pName_ = new byte[pLenOfName];
+            err_ = ProcTable.GetCalibrateMotionProgressProgressOfCurrentPose(ref pProgress, pName_, ref pLenOfName, handle_);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pName=Encoding.UTF8.GetString(pName_);
+            return err_;
         }
         [StructLayout(LayoutKind.Sequential)]
         private struct MCPCalibrateMotionProgress_ProcTable
@@ -1294,7 +1527,7 @@ namespace MocapApi
             internal _GetCalibrateMotionProgressCountOfSupportPoses GetCalibrateMotionProgressCountOfSupportPoses;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetCalibrateMotionProgressNameOfSupportPose(ref char name, ref uint pLenOfName, uint index, ulong handle_);
+            internal delegate EMCPError _GetCalibrateMotionProgressNameOfSupportPose([In, Out] byte[] pName, ref uint pLenOfName, uint index, ulong handle_);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetCalibrateMotionProgressNameOfSupportPose GetCalibrateMotionProgressNameOfSupportPose;
 
@@ -1314,17 +1547,17 @@ namespace MocapApi
             internal _GetCalibrateMotionProgressProgressOfPose GetCalibrateMotionProgressProgressOfPose;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetCalibrateMotionProgressStepOfCurrentPose(ref uint pStep, ref char name, ref uint pLenOfName, ulong handle_);
+            internal delegate EMCPError _GetCalibrateMotionProgressStepOfCurrentPose(ref uint pStep, [In, Out] byte[] pName, ref uint pLenOfName, ulong handle_);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetCalibrateMotionProgressStepOfCurrentPose GetCalibrateMotionProgressStepOfCurrentPose;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetCalibrateMotionProgressCountdownOfCurrentPose(ref uint pCountdown, ref char name, ref uint pLenOfName, ulong handle_);
+            internal delegate EMCPError _GetCalibrateMotionProgressCountdownOfCurrentPose(ref uint pCountdown, [In, Out] byte[] pName, ref uint pLenOfName, ulong handle_);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetCalibrateMotionProgressCountdownOfCurrentPose GetCalibrateMotionProgressCountdownOfCurrentPose;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetCalibrateMotionProgressProgressOfCurrentPose(ref uint pProgress, ref char name, ref uint pLenOfName, ulong handle_);
+            internal delegate EMCPError _GetCalibrateMotionProgressProgressOfCurrentPose(ref uint pProgress, [In, Out] byte[] pName, ref uint pLenOfName, ulong handle_);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetCalibrateMotionProgressProgressOfCurrentPose GetCalibrateMotionProgressProgressOfCurrentPose;
 
@@ -1343,6 +1576,11 @@ namespace MocapApi
             }
             ProcTable = (MCPCalibrateMotionProgress_ProcTable)Marshal.PtrToStructure(pp, typeof(MCPCalibrateMotionProgress_ProcTable));
         }
+    };
+    public enum EMCPMasterStatus
+    {
+        MasterStatus_Online=0,
+        MasterStatus_Offline=1
     };
     public class IMCPSystem
     {
@@ -1377,9 +1615,25 @@ namespace MocapApi
             }
             return r;
         }
-        public EMCPError GetSensorModules([In, Out]ulong[] pHandles, ref uint pLenOfHandles, ulong handle)
+        public EMCPError GetSensorModules([In, Out] ulong[] pHandles, ref uint pLenOfHandles, ulong handle)
         {
             return ProcTable.GetSensorModules(pHandles, ref pLenOfHandles, handle);
+        }
+        public EMCPError GetSensorModules(out ulong[] pHandles, ulong handle)
+        {
+            pHandles = null;
+            uint pLenOfHandles = 0;
+            var err_ = ProcTable.GetSensorModules(pHandles, ref pLenOfHandles, handle);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pHandles = new ulong[pLenOfHandles];
+            return ProcTable.GetSensorModules(pHandles, ref pLenOfHandles, handle);
+        }
+        public EMCPError GetMasterStatus(ref EMCPMasterStatus masterStatus, ulong handle)
+        {
+            return ProcTable.GetMasterStatus(ref masterStatus, handle);
         }
         [StructLayout(LayoutKind.Sequential)]
         private struct MCPSystem_ProcTable
@@ -1395,9 +1649,14 @@ namespace MocapApi
             internal _GetMasterSerialNumber GetMasterSerialNumber;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetSensorModules([In, Out]ulong[] pHandles, ref uint pLenOfHandles, ulong handle);
+            internal delegate EMCPError _GetSensorModules([In, Out] ulong[] pHandles, ref uint pLenOfHandles, ulong handle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetSensorModules GetSensorModules;
+
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            internal delegate EMCPError _GetMasterStatus(ref EMCPMasterStatus masterStatus, ulong handle);
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            internal _GetMasterStatus GetMasterStatus;
 
         };
         private MCPSystem_ProcTable ProcTable;
@@ -1896,20 +2155,68 @@ namespace MocapApi
         {
             return ProcTable.GetApplicationRigidBodies(ref pRigidBodyHandle, ref punRigidBodyHandleSize, ulApplicationHandle);
         }
-        public EMCPError GetApplicationAvatars([In, Out]ulong[] pAvatarHandle, ref uint punAvatarHandle, ulong ulApplicationHandle)
+        public EMCPError GetApplicationAvatars([In, Out] ulong[] pAvatarHandle, ref uint punAvatarHandle, ulong ulApplicationHandle)
         {
             return ProcTable.GetApplicationAvatars(pAvatarHandle, ref punAvatarHandle, ulApplicationHandle);
         }
-        public EMCPError PollApplicationNextEvent([In, Out]MCPEvent_t[] pEvent, ref uint punSizeOfEvent, ulong ulApplicationHandle)
+        public EMCPError GetApplicationAvatars(out ulong[] pAvatarHandle, ulong ulApplicationHandle)
+        {
+            pAvatarHandle = null;
+            uint punAvatarHandle = 0;
+            var err_ = ProcTable.GetApplicationAvatars(pAvatarHandle, ref punAvatarHandle, ulApplicationHandle);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pAvatarHandle = new ulong[punAvatarHandle];
+            return ProcTable.GetApplicationAvatars(pAvatarHandle, ref punAvatarHandle, ulApplicationHandle);
+        }
+        public EMCPError PollApplicationNextEvent([In, Out] MCPEvent_t[] pEvent, ref uint punSizeOfEvent, ulong ulApplicationHandle)
         {
             return ProcTable.PollApplicationNextEvent(pEvent, ref punSizeOfEvent, ulApplicationHandle);
         }
-        public EMCPError GetApplicationSensorModules([In, Out]ulong[] pSensorModuleHandle, ref uint punSensorModuleHandle, ulong ulApplicationHandle)
+        public EMCPError PollApplicationNextEvent(out MCPEvent_t[] pEvent, ulong ulApplicationHandle)
+        {
+            pEvent = null;
+            uint punSizeOfEvent = 0;
+            var err_ = ProcTable.PollApplicationNextEvent(pEvent, ref punSizeOfEvent, ulApplicationHandle);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pEvent = new MCPEvent_t[punSizeOfEvent];
+            return ProcTable.PollApplicationNextEvent(pEvent, ref punSizeOfEvent, ulApplicationHandle);
+        }
+        public EMCPError GetApplicationSensorModules([In, Out] ulong[] pSensorModuleHandle, ref uint punSensorModuleHandle, ulong ulApplicationHandle)
         {
             return ProcTable.GetApplicationSensorModules(pSensorModuleHandle, ref punSensorModuleHandle, ulApplicationHandle);
         }
-        public EMCPError GetApplicationTrackers([In, Out]ulong[] pTrackerHandle, ref uint punTrackerHandle, ulong ulApplicationHandle)
+        public EMCPError GetApplicationSensorModules(out ulong[] pSensorModuleHandle, ulong ulApplicationHandle)
         {
+            pSensorModuleHandle = null;
+            uint punSensorModuleHandle = 0;
+            var err_ = ProcTable.GetApplicationSensorModules(pSensorModuleHandle, ref punSensorModuleHandle, ulApplicationHandle);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pSensorModuleHandle = new ulong[punSensorModuleHandle];
+            return ProcTable.GetApplicationSensorModules(pSensorModuleHandle, ref punSensorModuleHandle, ulApplicationHandle);
+        }
+        public EMCPError GetApplicationTrackers([In, Out] ulong[] pTrackerHandle, ref uint punTrackerHandle, ulong ulApplicationHandle)
+        {
+            return ProcTable.GetApplicationTrackers(pTrackerHandle, ref punTrackerHandle, ulApplicationHandle);
+        }
+        public EMCPError GetApplicationTrackers(out ulong[] pTrackerHandle, ulong ulApplicationHandle)
+        {
+            pTrackerHandle = null;
+            uint punTrackerHandle = 0;
+            var err_ = ProcTable.GetApplicationTrackers(pTrackerHandle, ref punTrackerHandle, ulApplicationHandle);
+            if(err_ != EMCPError.Error_None)
+            {
+                return err_;
+            }
+            pTrackerHandle = new ulong[punTrackerHandle];
             return ProcTable.GetApplicationTrackers(pTrackerHandle, ref punTrackerHandle, ulApplicationHandle);
         }
         public EMCPError QueuedServerCommand(ulong cmdHandle, ulong ulApplicationHandle)
@@ -2027,22 +2334,22 @@ namespace MocapApi
             internal _GetApplicationRigidBodies GetApplicationRigidBodies;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetApplicationAvatars([In, Out]ulong[] pAvatarHandle, ref uint punAvatarHandle, ulong ulApplicationHandle);
+            internal delegate EMCPError _GetApplicationAvatars([In, Out] ulong[] pAvatarHandle, ref uint punAvatarHandle, ulong ulApplicationHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetApplicationAvatars GetApplicationAvatars;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _PollApplicationNextEvent([In, Out]MCPEvent_t[] pEvent, ref uint punSizeOfEvent, ulong ulApplicationHandle);
+            internal delegate EMCPError _PollApplicationNextEvent([In, Out] MCPEvent_t[] pEvent, ref uint punSizeOfEvent, ulong ulApplicationHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _PollApplicationNextEvent PollApplicationNextEvent;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetApplicationSensorModules([In, Out]ulong[] pSensorModuleHandle, ref uint punSensorModuleHandle, ulong ulApplicationHandle);
+            internal delegate EMCPError _GetApplicationSensorModules([In, Out] ulong[] pSensorModuleHandle, ref uint punSensorModuleHandle, ulong ulApplicationHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetApplicationSensorModules GetApplicationSensorModules;
 
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            internal delegate EMCPError _GetApplicationTrackers([In, Out]ulong[] pTrackerHandle, ref uint punTrackerHandle, ulong ulApplicationHandle);
+            internal delegate EMCPError _GetApplicationTrackers([In, Out] ulong[] pTrackerHandle, ref uint punTrackerHandle, ulong ulApplicationHandle);
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _GetApplicationTrackers GetApplicationTrackers;
 
@@ -2287,6 +2594,18 @@ namespace MocapApi
         {
             return ProcTable.RunRobotStep(handle);
         }
+        public EMCPError RunRobotStep1(float fixedDelta, ulong handle)
+        {
+            return ProcTable.RunRobotStep1(fixedDelta, handle);
+        }
+        public EMCPError GetRobotSlideSpeed(ref float value, ulong handle)
+        {
+            return ProcTable.GetRobotSlideSpeed(ref value, handle);
+        }
+        public EMCPError GetRobotSlideHeight(ref float value, ulong handle)
+        {
+            return ProcTable.GetRobotSlideHeight(ref value, handle);
+        }
         [StructLayout(LayoutKind.Sequential)]
         private struct MCPRobot_ProcTable
         {
@@ -2340,6 +2659,21 @@ namespace MocapApi
             [MarshalAs(UnmanagedType.FunctionPtr)]
             internal _RunRobotStep RunRobotStep;
 
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            internal delegate EMCPError _RunRobotStep1(float fixedDelta, ulong handle);
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            internal _RunRobotStep1 RunRobotStep1;
+
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            internal delegate EMCPError _GetRobotSlideSpeed(ref float value, ulong handle);
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            internal _GetRobotSlideSpeed GetRobotSlideSpeed;
+
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            internal delegate EMCPError _GetRobotSlideHeight(ref float value, ulong handle);
+            [MarshalAs(UnmanagedType.FunctionPtr)]
+            internal _GetRobotSlideHeight GetRobotSlideHeight;
+
         };
         private MCPRobot_ProcTable ProcTable;
         private static IMCPRobot robot;
@@ -2374,8 +2708,8 @@ namespace MocapApi
                 var mocapApi = new Version();
                 mocapApi.major = 0;
                 mocapApi.minor = 0;
-                mocapApi.build = 43;
-                mocapApi.revision = 0x774f9e52u;
+                mocapApi.build = 73;
+                mocapApi.revision = 0x19a54f85u;
                 return mocapApi;
             }
         }
@@ -2390,7 +2724,7 @@ namespace MocapApi
         {
             get
             {
-                return "0.0.43.774f9e52";
+                return "0.0.73.19a54f85";
             }
         }
         public uint major;
@@ -2418,24 +2752,6 @@ namespace MocapApi
     }
     internal class Interop
     {
-# if UNITY_IOS
-        [DllImportAttribute("__Internal", EntryPoint="MCPGetMocapApiVersionString",CallingConvention=CallingConvention.Cdecl)]
-# else
-        [DllImportAttribute("MocapApi", EntryPoint="MCPGetMocapApiVersionString",CallingConvention=CallingConvention.Cdecl)]
-# endif
-        internal static extern IntPtr MCPGetMocapApiVersionString();
-# if UNITY_IOS
-        [DllImportAttribute("__Internal", EntryPoint="MCPGetMocapApiVersion",CallingConvention=CallingConvention.Cdecl)]
-# else
-        [DllImportAttribute("MocapApi", EntryPoint="MCPGetMocapApiVersion",CallingConvention=CallingConvention.Cdecl)]
-# endif
-        internal static extern void MCPGetMocapApiVersion(ref uint major, ref uint minor, ref uint build, ref uint revision);
-# if UNITY_IOS
-        [DllImportAttribute("__Internal", EntryPoint="MCPGetGenericInterface",CallingConvention=CallingConvention.Cdecl)]
-# else
-        [DllImportAttribute("MocapApi", EntryPoint="MCPGetGenericInterface",CallingConvention=CallingConvention.Cdecl)]
-# endif
-        internal static extern EMCPError MCPGetGenericInterface([In, MarshalAs(UnmanagedType.LPStr)] string pchInterfaceVersion, ref IntPtr ppInterface);
     # if UNITY_IOS
         [DllImportAttribute("__Internal", EntryPoint="MCPGetMocapApiVersionString",CallingConvention=CallingConvention.Cdecl)]
     # else

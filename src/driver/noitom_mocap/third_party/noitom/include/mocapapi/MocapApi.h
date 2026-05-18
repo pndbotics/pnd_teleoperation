@@ -24,8 +24,8 @@
 
 #define MOCAP_API_VERSION_MAJOR 0
 #define MOCAP_API_VERSION_MINOR 0
-#define MOCAP_API_VERSION_BUILD 43
-#define MOCAP_API_VERSION_REVISION 774f9e52
+#define MOCAP_API_VERSION_BUILD 73
+#define MOCAP_API_VERSION_REVISION 19a54f85
 
 namespace MocapApi
 {
@@ -130,8 +130,10 @@ namespace MocapApi
         virtual EMCPError GetRigidBodyId(int * id, MCPRigidBodyHandle_t ulRigidBodyHandle) = 0;
         virtual EMCPError GetRigidBodyJointTag(EMCPJointTag * jointTag_, MCPRigidBodyHandle_t ulRigidBodyHandle) = 0;
         virtual EMCPError GetRigidBodyAxisAngle(float * x, float * y, float * z, float * angle, MCPRigidBodyHandle_t ulRigidBodyHandle) = 0;
+        virtual EMCPError GetRigidBodyType(uint32_t * type, MCPRigidBodyHandle_t ulRigidBodyHandle) = 0;
+        virtual EMCPError GetRigidBodyName(const char ** name, MCPRigidBodyHandle_t ulRigidBodyHandle) = 0;
     };
-    static const char * IMCPRigidBody_Version = "IMCPRigidBody_001";
+    static const char * IMCPRigidBody_Version = "IMCPRigidBody_002";
     typedef uint64_t MCPTrackerHandle_t;
     class IMCPTracker
     {
@@ -144,6 +146,14 @@ namespace MocapApi
         virtual EMCPError GetDeviceName(int serialNum, const char ** name, MCPTrackerHandle_t ulTrackerHandle) = 0;
     };
     static const char * IMCPTracker_Version = "IMCPTracker_001";
+    enum EMCPMagEnv
+    {
+        kMagEnv_Unknown=-1,
+        kMagEnv_Worst=0,
+        kMagEnv_Worse=1,
+        kMagEnv_Bad=2,
+        kMagEnv_Good=3
+    };
     typedef uint64_t MCPSensorModuleHandle_t;
     class IMCPSensorModule
     {
@@ -156,7 +166,8 @@ namespace MocapApi
         virtual EMCPError GetSensorModuleTemperature(float * temperature, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
         virtual EMCPError GetSensorModulePostureTimeCode(uint32_t * hour, uint32_t * minute, uint32_t * second, uint32_t * frame, uint32_t * rate, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
         virtual EMCPError GetSensorModulePostureTime(uint32_t * hour, uint32_t * minute, uint32_t * second, uint32_t * millisecond, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
-        virtual EMCPError GetSensorModuleMagEnvValue(int * pMagEnvValue, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
+        virtual EMCPError GetSensorModuleBoundBone(EMCPJointTag * bone, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
+        virtual EMCPError GetSensorModuleMagEnvValue(EMCPMagEnv * pMagEnvValue, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
         virtual EMCPError GetSesnorModulePacketRate(float * pRate, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
         virtual EMCPError GetSensorModuleSerialNumber(const char ** serialNumber, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
         virtual EMCPError GetSensorModuleFirmwareVersionString(const char ** firmwareVersion, MCPSensorModuleHandle_t sensorModuleHandle) = 0;
@@ -213,8 +224,9 @@ namespace MocapApi
         virtual EMCPError GetAvatarPostureIndex(uint32_t * postureIndex, MCPAvatarHandle_t ulAvatarHandle) = 0;
         virtual EMCPError GetAvatarPostureTimeCode(uint32_t * hour, uint32_t * minute, uint32_t * second, uint32_t * frame, uint32_t * rate, MCPAvatarHandle_t ulAvatarHandle) = 0;
         virtual EMCPError GetAvatarPostureTime(uint32_t * hour, uint32_t * minute, uint32_t * second, uint32_t * millisecond, MCPAvatarHandle_t ulAvatarHandle) = 0;
+        virtual EMCPError GetAvatarPosturePtpTime(uint32_t * second, uint32_t * nanosecond, MCPAvatarHandle_t ulAvatarHandle) = 0;
     };
-    static const char * IMCPAvatar_Version = "IMCPAvatar_004";
+    static const char * IMCPAvatar_Version = "IMCPAvatar_005";
     typedef uint64_t MCPMarkerHandle_t;
     class IMCPMarker
     {
@@ -246,6 +258,10 @@ namespace MocapApi
         virtual EMCPError GetPWRTimestamp(uint64_t * timestamp) = 0;
     };
     static const char * IMCPAliceHub_Version = "IMCPAliceHub_001";
+    enum EStartCaptureFlag
+    {
+        StartCaptureFlag_EnablePtp=1
+    };
     enum EMCPCommand
     {
         CommandStartCapture=0,
@@ -256,7 +272,8 @@ namespace MocapApi
         CommandStopRecored=5,
         CommandResumeOriginalPosture=6,
         CommandClearZeroMotionDrift=7,
-        CommandResumeOriginalHandsPosture=8
+        CommandResumeOriginalHandsPosture=8,
+        CommandPilotSimulationDriving=9
     };
     enum EMCPCalibrateMotionFlag
     {
@@ -286,6 +303,11 @@ namespace MocapApi
     {
         CommandProgress_CalibrateMotion=0
     };
+    enum EMCPRecoredFlag
+    {
+        RecoredFlag_AutoRecalculating=1,
+        RecoredFlag_AutoExportingBvh=2
+    };
     typedef uint64_t MCPCommandHandle_t;
     class IMCPCommand
     {
@@ -303,7 +325,7 @@ namespace MocapApi
         virtual EMCPError RemoveCommandExtraLong(uint32_t extraLongIndex, MCPCommandHandle_t handle_) = 0;
         virtual EMCPError GetCommandTag(uint32_t * pTag, MCPCommandHandle_t handle_) = 0;
     };
-    static const char * IMCPCommand_Version = "IMCPCommand_002";
+    static const char * IMCPCommand_Version = "IMCPCommand_003";
     enum EMCPCalibrateMotionProgressStep
     {
         CalibrateMotionProgressStep_Prepare=0,
@@ -315,15 +337,20 @@ namespace MocapApi
     {
     public:
         virtual EMCPError GetCalibrateMotionProgressCountOfSupportPoses(uint32_t * pCount, MCPCalibrateMotionProgressHandle_t handle_) = 0;
-        virtual EMCPError GetCalibrateMotionProgressNameOfSupportPose(char * name, uint32_t * pLenOfName, uint32_t index, MCPCalibrateMotionProgressHandle_t handle_) = 0;
+        virtual EMCPError GetCalibrateMotionProgressNameOfSupportPose(char * pName, uint32_t * pLenOfName, uint32_t index, MCPCalibrateMotionProgressHandle_t handle_) = 0;
         virtual EMCPError GetCalibrateMotionProgressStepOfPose(uint32_t * pStep, const char * name, MCPCalibrateMotionProgressHandle_t handle_) = 0;
         virtual EMCPError GetCalibrateMotionProgressCountdownOfPose(uint32_t * pCountdown, const char * name, MCPCalibrateMotionProgressHandle_t handle_) = 0;
         virtual EMCPError GetCalibrateMotionProgressProgressOfPose(uint32_t * pProgress, const char * name, MCPCalibrateMotionProgressHandle_t handle_) = 0;
-        virtual EMCPError GetCalibrateMotionProgressStepOfCurrentPose(uint32_t * pStep, char * name, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_) = 0;
-        virtual EMCPError GetCalibrateMotionProgressCountdownOfCurrentPose(uint32_t * pCountdown, char * name, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_) = 0;
-        virtual EMCPError GetCalibrateMotionProgressProgressOfCurrentPose(uint32_t * pProgress, char * name, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_) = 0;
+        virtual EMCPError GetCalibrateMotionProgressStepOfCurrentPose(uint32_t * pStep, char * pName, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_) = 0;
+        virtual EMCPError GetCalibrateMotionProgressCountdownOfCurrentPose(uint32_t * pCountdown, char * pName, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_) = 0;
+        virtual EMCPError GetCalibrateMotionProgressProgressOfCurrentPose(uint32_t * pProgress, char * pName, uint32_t * pLenOfName, MCPCalibrateMotionProgressHandle_t handle_) = 0;
     };
     static const char * IMCPCalibrateMotionProgress_Version = "IMCPCalibrateMotionProgress_001";
+    enum EMCPMasterStatus
+    {
+        MasterStatus_Online=0,
+        MasterStatus_Offline=1
+    };
     typedef uint64_t MCPSystemHandle_t;
     class IMCPSystem
     {
@@ -331,6 +358,7 @@ namespace MocapApi
         virtual EMCPError GetMasterVersion(const char ** pstr, MCPSystemHandle_t handle) = 0;
         virtual EMCPError GetMasterSerialNumber(const char ** pstr, MCPSystemHandle_t handle) = 0;
         virtual EMCPError GetSensorModules(MCPSensorModuleHandle_t * pHandles, uint32_t * pLenOfHandles, MCPSystemHandle_t handle) = 0;
+        virtual EMCPError GetMasterStatus(EMCPMasterStatus * masterStatus, MCPSystemHandle_t handle) = 0;
     };
     static const char * IMCPSystem_Version = "IMCPSystem_001";
     struct MCPEvent_Reserved_t
@@ -600,11 +628,11 @@ namespace MocapApi
         virtual EMCPError GetRobotRootPosition(float * x, float * y, float * z, MCPRobotHandle_t handle) = 0;
         virtual EMCPError DestroyRobot(MCPRobotHandle_t handle) = 0;
         virtual EMCPError RunRobotStep(MCPRobotHandle_t handle) = 0;
+        virtual EMCPError RunRobotStep1(float fixedDelta, MCPRobotHandle_t handle) = 0;
+        virtual EMCPError GetRobotSlideSpeed(float * value, MCPRobotHandle_t handle) = 0;
+        virtual EMCPError GetRobotSlideHeight(float * value, MCPRobotHandle_t handle) = 0;
     };
     static const char * IMCPRobot_Version = "IMCPRobot_001";
-    MCP_INTERFACE EMCPError MCP_CALLTYPE MCPGetGenericInterface(const char * pchInterfaceVersion, void ** ppInterface);
-    MCP_INTERFACE void MCP_CALLTYPE MCPGetMocapApiVersion(uint32_t * major, uint32_t * minor, uint32_t * build, uint32_t * revision);
-    MCP_INTERFACE const char * MCP_CALLTYPE MCPGetMocapApiVersionString();
     MCP_INTERFACE EMCPError MCP_CALLTYPE MCPGetGenericInterface(const char * pchInterfaceVersion, void ** ppInterface);
     MCP_INTERFACE void MCP_CALLTYPE MCPGetMocapApiVersion(uint32_t * major, uint32_t * minor, uint32_t * build, uint32_t * revision);
     MCP_INTERFACE const char * MCP_CALLTYPE MCPGetMocapApiVersionString();
