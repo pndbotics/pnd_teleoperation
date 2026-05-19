@@ -10,7 +10,7 @@ from .common import PROJECT_ROOT, echo_error, echo_warning
 _LAUNCH_MAP_CACHE: dict[tuple[str, str, str], str] | None = None
 
 VALID_ADAM_TYPES = ["adam_sp", "adam_u", "adam_pro"]
-VALID_MOCAP_DRIVERS = ["noitom", "zerolab", "webvr"]
+VALID_MOCAP_DRIVERS = ["noitom", "zerolab", "webvr", "pico"]
 VALID_ALGORITHMS = ["pinocchio", "mink"]
 
 
